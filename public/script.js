@@ -1,5 +1,7 @@
-async function updateSummary() {
-    const res = await fetch('/api/riepilogo');
+async function updateSummary(month, year) {
+    let url = '/api/riepilogo';
+    if (month && year) url += `?mese=${month}&anno=${year}`;
+    const res = await fetch(url);
     const data = await res.json();
     document.getElementById('totalIncome').textContent = data.entrate.toFixed(2);
     document.getElementById('totalExpense').textContent = data.uscite.toFixed(2);
@@ -7,8 +9,10 @@ async function updateSummary() {
 }
 
 
-async function updateEntries() {
-    const res = await fetch('/api/movimenti');
+async function updateEntries(month, year) {
+    let url = '/api/movimenti';
+    if (month && year) url += `?mese=${month}&anno=${year}`;
+    const res = await fetch(url);
     const entries = await res.json();
     const tbody = document.querySelector('#entriesTable tbody');
     tbody.innerHTML = '';
@@ -104,8 +108,10 @@ document.getElementById('entryForm').addEventListener('submit', async e => {
 
 // GRAFICO A TORTA
 let pieChart;
-async function updatePieChart() {
-    const res = await fetch('/api/riepilogo');
+async function updatePieChart(month, year) {
+    let url = '/api/riepilogo';
+    if (month && year) url += `?mese=${month}&anno=${year}`;
+    const res = await fetch(url);
     const data = await res.json();
     const ctx = document.getElementById('pieChart').getContext('2d');
     const chartData = {
@@ -133,10 +139,94 @@ async function updatePieChart() {
     }
 }
 
-async function updateAll() {
-    await updateSummary();
-    await updateEntries();
-    await updatePieChart();
+// GRAFICO ANDAMENTO MENSILE
+let trendChart;
+async function updateTrendChart() {
+    const res = await fetch('/api/andamento');
+    const data = await res.json();
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    const labels = data.map(d => `${d.mese}/${d.anno}`);
+    const entrate = data.map(d => d.entrate);
+    const uscite = data.map(d => d.uscite);
+    const saldo = data.map(d => d.saldo);
+    const chartData = {
+        labels,
+        datasets: [
+            {
+                label: 'Entrate',
+                data: entrate,
+                borderColor: '#4caf50',
+                backgroundColor: 'rgba(76,175,80,0.1)',
+                fill: false
+            },
+            {
+                label: 'Uscite',
+                data: uscite,
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231,76,60,0.1)',
+                fill: false
+            },
+            {
+                label: 'Risparmi',
+                data: saldo,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52,152,219,0.1)',
+                fill: false
+            }
+        ]
+    };
+    if (trendChart) {
+        trendChart.data = chartData;
+        trendChart.update();
+    } else {
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                plugins: {
+                    legend: { display: true, position: 'bottom' },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
 }
+
+
+function getSelectedMonthYear() {
+    const month = document.getElementById('monthSelect').value;
+    const year = document.getElementById('yearSelect').value;
+    return { month, year };
+}
+
+async function updateAll() {
+    const { month, year } = getSelectedMonthYear();
+    await updateSummary(month, year);
+    await updateEntries(month, year);
+    await updatePieChart(month, year);
+    await updateTrendChart();
+}
+
+// Popola selettore anno dinamicamente
+function populateYearSelect() {
+    const yearSelect = document.getElementById('yearSelect');
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = '';
+    for (let y = currentYear - 5; y <= currentYear + 1; y++) {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = String(y);
+        if (y === currentYear) opt.selected = true;
+        yearSelect.appendChild(opt);
+    }
+}
+
+populateYearSelect();
+
+document.getElementById('monthSelect').addEventListener('change', updateAll);
+document.getElementById('yearSelect').addEventListener('change', updateAll);
 
 updateAll();
