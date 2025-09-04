@@ -230,7 +230,9 @@ function populateYearSelect() {
 
 document.addEventListener('DOMContentLoaded', () => {
     populateYearSelect();
-    document.getElementById('monthSelect').addEventListener('change', updateAll);
-    document.getElementById('yearSelect').addEventListener('change', updateAll);
+    const monthSel = document.getElementById('monthSelect');
+    const yearSel = document.getElementById('yearSelect');
+    if (monthSel) monthSel.addEventListener('change', updateAll);
+    if (yearSel) yearSel.addEventListener('change', updateAll);
     updateAll();
 });
