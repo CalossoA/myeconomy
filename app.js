@@ -73,7 +73,7 @@ app.get('/api/riepilogo', (req, res) => {
         let query = 'SELECT tipo, importo, data FROM movimenti';
         let params = [];
         if (month && year) {
-            query += ' WHERE strftime("%m", data) = ? AND strftime("%Y", data) = ?';
+            query += " WHERE strftime('%m', data) = ? AND strftime('%Y', data) = ?";
             params = [month.padStart(2, '0'), year];
         }
         const rows = db.prepare(query).all(...params);
