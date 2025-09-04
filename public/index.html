@@ -19,25 +19,32 @@
             <input type="text" id="description" placeholder="Descrizione">
             <button type="submit">Aggiungi</button>
         </form>
-        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
-            <label for="monthSelect">Mese:</label>
-            <select id="monthSelect">
-                <option value="01">Gennaio</option>
-                <option value="02">Febbraio</option>
-                <option value="03">Marzo</option>
-                <option value="04">Aprile</option>
-                <option value="05">Maggio</option>
-                <option value="06">Giugno</option>
-                <option value="07">Luglio</option>
-                <option value="08">Agosto</option>
-                <option value="09">Settembre</option>
-                <option value="10">Ottobre</option>
-                <option value="11">Novembre</option>
-                <option value="12">Dicembre</option>
-            </select>
-            <label for="yearSelect">Anno:</label>
-            <select id="yearSelect"></select>
-        </div>
+            <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+                <label for="typeFilter">Tipo:</label>
+                <select id="typeFilter">
+                    <option value="all">Tutti</option>
+                    <option value="entrata">Entrata</option>
+                    <option value="uscita">Uscita</option>
+                </select>
+                <label for="monthFilter">Mese:</label>
+                <select id="monthFilter">
+                    <option value="all">Tutti</option>
+                    <option value="01">Gennaio</option>
+                    <option value="02">Febbraio</option>
+                    <option value="03">Marzo</option>
+                    <option value="04">Aprile</option>
+                    <option value="05">Maggio</option>
+                    <option value="06">Giugno</option>
+                    <option value="07">Luglio</option>
+                    <option value="08">Agosto</option>
+                    <option value="09">Settembre</option>
+                    <option value="10">Ottobre</option>
+                    <option value="11">Novembre</option>
+                    <option value="12">Dicembre</option>
+                </select>
+                <label for="yearFilter">Anno:</label>
+                <select id="yearFilter"></select>
+            </div>
         <div class="summary">
             <h2>Riepilogo</h2>
             <p>Entrate: <span id="totalIncome">0</span> €</p>

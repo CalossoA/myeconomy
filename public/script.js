@@ -74,7 +74,7 @@ async function openEditModal(id) {
 
 document.getElementById('editForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const id = document.getElementById('editId').value;
+    function populateYearSelects() {
     const data = document.getElementById('editDate').value;
     let tipo = document.getElementById('editType').value;
     tipo = tipo === 'income' ? 'entrata' : (tipo === 'expense' ? 'uscita' : tipo);
@@ -87,13 +87,13 @@ document.getElementById('editForm').addEventListener('submit', async e => {
     });
     closeModal();
     updateAll();
-});
+
 
 document.getElementById('entryForm').addEventListener('submit', async e => {
     e.preventDefault();
     const data = document.getElementById('date').value;
-    let tipo = document.getElementById('type').value;
-    tipo = tipo === 'income' ? 'entrata' : (tipo === 'expense' ? 'uscita' : tipo);
+    document.addEventListener('DOMContentLoaded', () => {
+        populateYearSelects();
     const importo = Number(document.getElementById('amount').value);
     const descrizione = document.getElementById('description').value;
     await fetch('/api/movimenti', {
@@ -110,7 +110,7 @@ document.getElementById('entryForm').addEventListener('submit', async e => {
 let pieChart;
 async function updatePieChart(month, year) {
     let url = '/api/riepilogo';
-    if (month && year) url += `?mese=${month}&anno=${year}`;
+    async function updateEntriesFiltered() {
     const res = await fetch(url);
     const data = await res.json();
     const ctx = document.getElementById('pieChart').getContext('2d');
@@ -241,11 +241,25 @@ function populateYearSelect() {
 }
 
 
+
+function populateYearFilter() {
+    const yearFilter = document.getElementById('yearFilter');
+    if (!yearFilter) return;
+    const currentYear = new Date().getFullYear();
+    yearFilter.innerHTML = '<option value="all">Tutti</option>';
+    for (let y = currentYear - 5; y <= currentYear + 1; y++) {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = String(y);
+        if (y === currentYear) opt.selected = true;
+        yearFilter.appendChild(opt);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    populateYearSelect();
-    const monthSel = document.getElementById('monthSelect');
-    const yearSel = document.getElementById('yearSelect');
-    if (monthSel) monthSel.addEventListener('change', updateAll);
-    if (yearSel) yearSel.addEventListener('change', updateAll);
+    populateYearFilter();
+    document.getElementById('typeFilter').addEventListener('change', updateAll);
+    document.getElementById('monthFilter').addEventListener('change', updateAll);
+    document.getElementById('yearFilter').addEventListener('change', updateAll);
     updateAll();
 });
