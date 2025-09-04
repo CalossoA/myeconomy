@@ -102,7 +102,7 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
     });
     document.getElementById('entryForm').reset();
     updateAll();
-
+})  
 
 
 // GRAFICO A TORTA
@@ -136,6 +136,7 @@ async function updatePieChart(month, year) {
             }
         });
     }
+}
 }
 
 // GRAFICO ANDAMENTO MENSILE
