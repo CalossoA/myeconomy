@@ -10,31 +10,33 @@ app.use(express.json());
 // Inizializza il database
 initDB();
 
+
 // Ottieni tutti i movimenti
 app.get('/api/movimenti', (req, res) => {
-    db.all('SELECT * FROM movimenti ORDER BY data DESC', [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+    try {
+        const rows = db.prepare('SELECT * FROM movimenti ORDER BY data DESC').all();
         res.json(rows);
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Aggiungi un movimento
 app.post('/api/movimenti', (req, res) => {
-    const { tipo, descrizione, importo, data } = req.body;
-    db.run(
-        'INSERT INTO movimenti (tipo, descrizione, importo, data) VALUES (?, ?, ?, ?)',
-        [tipo, descrizione, importo, data],
-        function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ success: true, id: this.lastID });
-        }
-    );
+    try {
+        const { tipo, descrizione, importo, data } = req.body;
+        const stmt = db.prepare('INSERT INTO movimenti (tipo, descrizione, importo, data) VALUES (?, ?, ?, ?)');
+        const info = stmt.run(tipo, descrizione, importo, data);
+        res.json({ success: true, id: info.lastInsertRowid });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Riepilogo entrate/uscite/saldo
 app.get('/api/riepilogo', (req, res) => {
-    db.all('SELECT tipo, importo FROM movimenti', [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+    try {
+        const rows = db.prepare('SELECT tipo, importo FROM movimenti').all();
         let entrate = 0;
         let uscite = 0;
         rows.forEach(mov => {
@@ -42,7 +44,9 @@ app.get('/api/riepilogo', (req, res) => {
             else if (mov.tipo === 'uscita') uscite += mov.importo;
         });
         res.json({ entrate, uscite, saldo: entrate - uscite });
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.listen(PORT, () => {
