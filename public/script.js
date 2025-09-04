@@ -3,7 +3,7 @@ async function updateSummary() {
     const data = await res.json();
     document.getElementById('totalIncome').textContent = data.entrate.toFixed(2);
     document.getElementById('totalExpense').textContent = data.uscite.toFixed(2);
-    document.getElementById('savings').textContent = (data.entrate - data.uscite).toFixed(2);
+    document.getElementById('savings').textContent = data.saldo.toFixed(2);
 }
 
 
@@ -32,9 +32,7 @@ async function updateEntries() {
         btn.onclick = async function() {
             if (confirm('Eliminare questa transazione?')) {
                 await fetch(`/api/movimenti/${btn.dataset.id}`, { method: 'DELETE' });
-                updateSummary();
-                updateEntries();
-                updatePieChart();
+                updateAll();
             }
         };
     });
@@ -57,13 +55,17 @@ async function openEditModal(id) {
     const res = await fetch('/api/movimenti');
     const entries = await res.json();
     const entry = entries.find(e => e.id === id);
-    if (!entry) return;
+    if (!entry) {
+        console.warn('Movimento non trovato per la modifica:', id);
+        return;
+    }
     document.getElementById('editId').value = entry.id;
     document.getElementById('editDate').value = entry.data;
     document.getElementById('editType').value = entry.tipo;
     document.getElementById('editAmount').value = entry.importo;
     document.getElementById('editDescription').value = entry.descrizione || '';
     modal.style.display = 'block';
+    console.log('Modale modifica aperta per movimento:', entry);
 }
 
 document.getElementById('editForm').addEventListener('submit', async e => {
@@ -79,9 +81,7 @@ document.getElementById('editForm').addEventListener('submit', async e => {
         body: JSON.stringify({ data, tipo, importo, descrizione })
     });
     closeModal();
-    updateSummary();
-    updateEntries();
-    updatePieChart();
+    updateAll();
 });
 
 document.getElementById('entryForm').addEventListener('submit', async e => {
@@ -96,9 +96,7 @@ document.getElementById('entryForm').addEventListener('submit', async e => {
         body: JSON.stringify({ data, tipo, importo, descrizione })
     });
     document.getElementById('entryForm').reset();
-    updateSummary();
-    updateEntries();
-    updatePieChart();
+    updateAll();
 });
 
 
@@ -108,11 +106,10 @@ async function updatePieChart() {
     const res = await fetch('/api/riepilogo');
     const data = await res.json();
     const ctx = document.getElementById('pieChart').getContext('2d');
-    const risparmi = data.entrate - data.uscite;
     const chartData = {
         labels: ['Entrate', 'Uscite', 'Risparmi'],
         datasets: [{
-            data: [data.entrate, data.uscite, Math.max(risparmi, 0)],
+            data: [data.entrate, data.uscite, Math.max(data.saldo, 0)],
             backgroundColor: ['#4caf50', '#e74c3c', '#3498db'],
             borderWidth: 1
         }]
