@@ -16,7 +16,7 @@ app.get('/api/movimenti', (req, res) => {
         let query = 'SELECT * FROM movimenti';
         let params = [];
         if (month && year) {
-            query += ' WHERE strftime("%m", data) = ? AND strftime("%Y", data) = ?';
+            query += " WHERE strftime('%m', data) = ? AND strftime('%Y', data) = ?";
             params = [month.padStart(2, '0'), year];
         }
         query += ' ORDER BY data DESC';
