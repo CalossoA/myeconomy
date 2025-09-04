@@ -142,9 +142,20 @@ async function updatePieChart(month, year) {
 // GRAFICO ANDAMENTO MENSILE
 let trendChart;
 async function updateTrendChart() {
+    const trendCanvas = document.getElementById('trendChart');
+    if (!trendCanvas) return;
+    const ctx = trendCanvas.getContext('2d');
+    if (!ctx) return;
     const res = await fetch('/api/andamento');
     const data = await res.json();
-    const ctx = document.getElementById('trendChart').getContext('2d');
+    if (!Array.isArray(data) || data.length === 0) {
+        if (trendChart) {
+            trendChart.data.labels = [];
+            trendChart.data.datasets.forEach(ds => ds.data = []);
+            trendChart.update();
+        }
+        return;
+    }
     const labels = data.map(d => `${d.mese}/${d.anno}`);
     const entrate = data.map(d => d.entrate);
     const uscite = data.map(d => d.uscite);

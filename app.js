@@ -98,6 +98,9 @@ app.get('/api/andamento', (req, res) => {
             year = new Date().getFullYear();
         }
         const rows = db.prepare('SELECT tipo, importo, data FROM movimenti WHERE strftime("%Y", data) = ?').all(year);
+        if (!rows || rows.length === 0) {
+            return res.json([]);
+        }
         // Aggrega per mese
         const stats = {};
         for (let m = 1; m <= 12; m++) {
