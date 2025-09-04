@@ -1,3 +1,36 @@
+const express = require('express');
+const { db, initDB } = require('./db');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(express.static('public'));
+app.use(express.json());
+
+// Inizializza il database
+initDB();
+
+// Ottieni tutti i movimenti
+app.get('/api/movimenti', (req, res) => {
+    try {
+        const rows = db.prepare('SELECT * FROM movimenti ORDER BY data DESC').all();
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Aggiungi un movimento
+app.post('/api/movimenti', (req, res) => {
+    try {
+        const { tipo, descrizione, importo, data } = req.body;
+        const stmt = db.prepare('INSERT INTO movimenti (tipo, descrizione, importo, data) VALUES (?, ?, ?, ?)');
+        const info = stmt.run(tipo, descrizione, importo, data);
+        res.json({ success: true, id: info.lastInsertRowid });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Elimina un movimento
 app.delete('/api/movimenti/:id', (req, res) => {
     try {
@@ -20,40 +53,6 @@ app.put('/api/movimenti/:id', (req, res) => {
         ).run(tipo, descrizione, importo, data, id);
         if (info.changes === 0) return res.status(404).json({ error: 'Movimento non trovato' });
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-const express = require('express');
-const { db, initDB } = require('./db');
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(express.static('public'));
-app.use(express.json());
-
-// Inizializza il database
-initDB();
-
-
-// Ottieni tutti i movimenti
-app.get('/api/movimenti', (req, res) => {
-    try {
-        const rows = db.prepare('SELECT * FROM movimenti ORDER BY data DESC').all();
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// Aggiungi un movimento
-app.post('/api/movimenti', (req, res) => {
-    try {
-        const { tipo, descrizione, importo, data } = req.body;
-        const stmt = db.prepare('INSERT INTO movimenti (tipo, descrizione, importo, data) VALUES (?, ?, ?, ?)');
-        const info = stmt.run(tipo, descrizione, importo, data);
-        res.json({ success: true, id: info.lastInsertRowid });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
