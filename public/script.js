@@ -142,11 +142,13 @@ async function updatePieChart(month, year) {
 // GRAFICO ANDAMENTO MENSILE
 let trendChart;
 async function updateTrendChart() {
+    const yearSel = document.getElementById('yearSelect');
+    const year = yearSel ? yearSel.value : new Date().getFullYear();
     const trendCanvas = document.getElementById('trendChart');
     if (!trendCanvas) return;
     const ctx = trendCanvas.getContext('2d');
     if (!ctx) return;
-    const res = await fetch('/api/andamento');
+    const res = await fetch(`/api/andamento?year=${year}`);
     const data = await res.json();
     if (!Array.isArray(data) || data.length === 0) {
         if (trendChart) {
