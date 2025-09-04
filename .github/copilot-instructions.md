@@ -1,0 +1,5 @@
+- [x] Progetto creato: app web locale per la gestione dell'economia personale con Node.js, Express e JavaScript.
+- [ ] Installare le dipendenze con `npm install`.
+- [ ] Avviare il server con `npm start`.
+- [ ] Aprire il browser su http://localhost:3000
+- [ ] Usare l'interfaccia per inserire entrate/uscite e vedere riepilogo e movimenti.

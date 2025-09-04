@@ -1,0 +1,11 @@
+{
+  "entries": [
+    {
+      "id": "1",
+      "date": "2025-09-05",
+      "type": "income",
+      "amount": 1200,
+      "description": "stipendio"
+    }
+  ]
+}

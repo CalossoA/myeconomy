@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestione Economia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Gestione Economia</h1>
+        <form id="entryForm">
+            <input type="date" id="date" required>
+            <select id="type">
+                <option value="income">Entrata</option>
+                <option value="expense">Uscita</option>
+            </select>
+            <input type="number" id="amount" placeholder="Importo" required min="0" step="0.01">
+            <input type="text" id="description" placeholder="Descrizione">
+            <button type="submit">Aggiungi</button>
+        </form>
+        <div class="summary">
+            <h2>Riepilogo</h2>
+            <p>Entrate: <span id="totalIncome">0</span> €</p>
+            <p>Uscite: <span id="totalExpense">0</span> €</p>
+            <p>Risparmi: <span id="savings">0</span> €</p>
+            <div class="chart-container">
+                <canvas id="pieChart" width="30" height="30" aria-label="Grafico a torta" role="img"></canvas>
+            </div>
+        </div>
+        <div class="entries">
+            <h2>Movimenti</h2>
+            <table id="entriesTable">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Importo</th>
+                        <th>Descrizione</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <!-- Modale modifica -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Modifica Transazione</h2>
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <input type="date" id="editDate" required>
+                    <select id="editType">
+                        <option value="income">Entrata</option>
+                        <option value="expense">Uscita</option>
+                    </select>
+                    <input type="number" id="editAmount" placeholder="Importo" required min="0" step="0.01">
+                    <input type="text" id="editDescription" placeholder="Descrizione">
+                    <button type="submit">Salva</button>
+                </form>
+            </div>
+        </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
