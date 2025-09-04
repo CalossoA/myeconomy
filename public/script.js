@@ -16,7 +16,7 @@ async function updateEntries() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${e.data}</td>
-            <td>${e.tipo === 'entrata' ? 'Entrata' : 'Uscita'}</td>
+            <td>${e.tipo === 'entrata' ? 'Entrata' : (e.tipo === 'uscita' ? 'Uscita' : e.tipo)}</td>
             <td>${e.importo.toFixed(2)} €</td>
             <td>${e.descrizione || ''}</td>
             <td>
@@ -54,7 +54,7 @@ window.onclick = function(event) { if (event.target === modal) closeModal(); };
 async function openEditModal(id) {
     const res = await fetch('/api/movimenti');
     const entries = await res.json();
-    const entry = entries.find(e => e.id === id);
+    const entry = entries.find(e => String(e.id) === String(id));
     if (!entry) {
         console.warn('Movimento non trovato per la modifica:', id);
         return;
@@ -72,7 +72,8 @@ document.getElementById('editForm').addEventListener('submit', async e => {
     e.preventDefault();
     const id = document.getElementById('editId').value;
     const data = document.getElementById('editDate').value;
-    const tipo = document.getElementById('editType').value;
+    let tipo = document.getElementById('editType').value;
+    tipo = tipo === 'income' ? 'entrata' : (tipo === 'expense' ? 'uscita' : tipo);
     const importo = Number(document.getElementById('editAmount').value);
     const descrizione = document.getElementById('editDescription').value;
     await fetch(`/api/movimenti/${id}`, {
@@ -87,7 +88,8 @@ document.getElementById('editForm').addEventListener('submit', async e => {
 document.getElementById('entryForm').addEventListener('submit', async e => {
     e.preventDefault();
     const data = document.getElementById('date').value;
-    const tipo = document.getElementById('type').value;
+    let tipo = document.getElementById('type').value;
+    tipo = tipo === 'income' ? 'entrata' : (tipo === 'expense' ? 'uscita' : tipo);
     const importo = Number(document.getElementById('amount').value);
     const descrizione = document.getElementById('description').value;
     await fetch('/api/movimenti', {
