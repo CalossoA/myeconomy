@@ -98,7 +98,7 @@ app.get('/api/andamento', (req, res) => {
         if (!year) {
             year = new Date().getFullYear();
         }
-        const rows = db.prepare('SELECT tipo, importo, data FROM movimenti WHERE strftime("%Y", data) = ?').all(year);
+    const rows = db.prepare("SELECT tipo, importo, data FROM movimenti WHERE strftime('%Y', data) = ?").all(year);
         console.log('Movimenti trovati:', rows);
         if (!rows || rows.length === 0) {
             console.log('Nessun movimento per l’anno richiesto');
