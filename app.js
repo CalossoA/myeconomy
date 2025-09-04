@@ -1,3 +1,29 @@
+// Elimina un movimento
+app.delete('/api/movimenti/:id', (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const info = db.prepare('DELETE FROM movimenti WHERE id = ?').run(id);
+        if (info.changes === 0) return res.status(404).json({ error: 'Movimento non trovato' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Modifica un movimento
+app.put('/api/movimenti/:id', (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        const { tipo, descrizione, importo, data } = req.body;
+        const info = db.prepare(
+            'UPDATE movimenti SET tipo = ?, descrizione = ?, importo = ?, data = ? WHERE id = ?'
+        ).run(tipo, descrizione, importo, data, id);
+        if (info.changes === 0) return res.status(404).json({ error: 'Movimento non trovato' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 const express = require('express');
 const { db, initDB } = require('./db');

@@ -1,24 +1,24 @@
 async function updateSummary() {
-    const res = await fetch('/api/summary');
+    const res = await fetch('/api/riepilogo');
     const data = await res.json();
-    document.getElementById('totalIncome').textContent = data.totalIncome.toFixed(2);
-    document.getElementById('totalExpense').textContent = data.totalExpense.toFixed(2);
-    document.getElementById('savings').textContent = data.savings.toFixed(2);
+    document.getElementById('totalIncome').textContent = data.entrate.toFixed(2);
+    document.getElementById('totalExpense').textContent = data.uscite.toFixed(2);
+    document.getElementById('savings').textContent = data.saldo.toFixed(2);
 }
 
 
 async function updateEntries() {
-    const res = await fetch('/api/entries');
+    const res = await fetch('/api/movimenti');
     const entries = await res.json();
     const tbody = document.querySelector('#entriesTable tbody');
     tbody.innerHTML = '';
-    entries.slice().reverse().forEach(e => {
+    entries.forEach(e => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${e.date}</td>
-            <td>${e.type === 'income' ? 'Entrata' : 'Uscita'}</td>
-            <td>${e.amount.toFixed(2)} €</td>
-            <td>${e.description || ''}</td>
+            <td>${e.data}</td>
+            <td>${e.tipo === 'entrata' ? 'Entrata' : 'Uscita'}</td>
+            <td>${e.importo.toFixed(2)} €</td>
+            <td>${e.descrizione || ''}</td>
             <td>
                 <button class="edit-btn" data-id="${e.id}">✏️</button>
                 <button class="delete-btn" data-id="${e.id}">🗑️</button>
@@ -31,7 +31,7 @@ async function updateEntries() {
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.onclick = async function() {
             if (confirm('Eliminare questa transazione?')) {
-                await fetch(`/api/entry/${btn.dataset.id}`, { method: 'DELETE' });
+                await fetch(`/api/movimenti/${btn.dataset.id}`, { method: 'DELETE' });
                 updateSummary();
                 updateEntries();
                 updatePieChart();
@@ -54,29 +54,29 @@ document.querySelector('#editModal .close').onclick = closeModal;
 window.onclick = function(event) { if (event.target === modal) closeModal(); };
 
 async function openEditModal(id) {
-    const res = await fetch('/api/entries');
+    const res = await fetch('/api/movimenti');
     const entries = await res.json();
     const entry = entries.find(e => e.id === id);
     if (!entry) return;
     document.getElementById('editId').value = entry.id;
-    document.getElementById('editDate').value = entry.date;
-    document.getElementById('editType').value = entry.type;
-    document.getElementById('editAmount').value = entry.amount;
-    document.getElementById('editDescription').value = entry.description || '';
+    document.getElementById('editDate').value = entry.data;
+    document.getElementById('editType').value = entry.tipo;
+    document.getElementById('editAmount').value = entry.importo;
+    document.getElementById('editDescription').value = entry.descrizione || '';
     modal.style.display = 'block';
 }
 
 document.getElementById('editForm').addEventListener('submit', async e => {
     e.preventDefault();
     const id = document.getElementById('editId').value;
-    const date = document.getElementById('editDate').value;
-    const type = document.getElementById('editType').value;
-    const amount = document.getElementById('editAmount').value;
-    const description = document.getElementById('editDescription').value;
-    await fetch(`/api/entry/${id}`, {
+    const data = document.getElementById('editDate').value;
+    const tipo = document.getElementById('editType').value;
+    const importo = Number(document.getElementById('editAmount').value);
+    const descrizione = document.getElementById('editDescription').value;
+    await fetch(`/api/movimenti/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, type, amount, description })
+        body: JSON.stringify({ data, tipo, importo, descrizione })
     });
     closeModal();
     updateSummary();
@@ -86,14 +86,14 @@ document.getElementById('editForm').addEventListener('submit', async e => {
 
 document.getElementById('entryForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const date = document.getElementById('date').value;
-    const type = document.getElementById('type').value;
-    const amount = document.getElementById('amount').value;
-    const description = document.getElementById('description').value;
-    await fetch('/api/entry', {
+    const data = document.getElementById('date').value;
+    const tipo = document.getElementById('type').value;
+    const importo = Number(document.getElementById('amount').value);
+    const descrizione = document.getElementById('description').value;
+    await fetch('/api/movimenti', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date, type, amount, description })
+        body: JSON.stringify({ data, tipo, importo, descrizione })
     });
     document.getElementById('entryForm').reset();
     updateSummary();
@@ -105,13 +105,13 @@ document.getElementById('entryForm').addEventListener('submit', async e => {
 // GRAFICO A TORTA
 let pieChart;
 async function updatePieChart() {
-    const res = await fetch('/api/summary');
+    const res = await fetch('/api/riepilogo');
     const data = await res.json();
     const ctx = document.getElementById('pieChart').getContext('2d');
     const chartData = {
         labels: ['Entrate', 'Uscite', 'Risparmi'],
         datasets: [{
-            data: [data.totalIncome, data.totalExpense, Math.max(data.savings, 0)],
+            data: [data.entrate, data.uscite, Math.max(data.saldo, 0)],
             backgroundColor: ['#4caf50', '#e74c3c', '#3498db'],
             borderWidth: 1
         }]
