@@ -89,11 +89,11 @@ document.getElementById('editForm').addEventListener('submit', async e => {
     updateAll();
 
 
-document.getElementById('entryForm').addEventListener('submit', async e => {
+document.getElementById('entryForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const data = document.getElementById('date').value;
-    document.addEventListener('DOMContentLoaded', () => {
-        populateYearSelects();
+    let tipo = document.getElementById('type').value;
+    tipo = tipo === 'income' ? 'entrata' : (tipo === 'expense' ? 'uscita' : tipo);
     const importo = Number(document.getElementById('amount').value);
     const descrizione = document.getElementById('description').value;
     await fetch('/api/movimenti', {
