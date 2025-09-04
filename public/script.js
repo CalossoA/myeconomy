@@ -72,22 +72,21 @@ async function openEditModal(id) {
     console.log('Modale modifica aperta per movimento:', entry);
 }
 
-document.getElementById('editForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    function populateYearSelects() {
-    const data = document.getElementById('editDate').value;
-    let tipo = document.getElementById('editType').value;
-    tipo = tipo === 'income' ? 'entrata' : (tipo === 'expense' ? 'uscita' : tipo);
-    const importo = Number(document.getElementById('editAmount').value);
-    const descrizione = document.getElementById('editDescription').value;
-    await fetch(`/api/movimenti/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data, tipo, importo, descrizione })
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const data = document.getElementById('editDate').value;
+        let tipo = document.getElementById('editType').value;
+        tipo = tipo === 'income' ? 'entrata' : (tipo === 'expense' ? 'uscita' : tipo);
+        const importo = Number(document.getElementById('editAmount').value);
+        const descrizione = document.getElementById('editDescription').value;
+        await fetch(`/api/movimenti/${document.getElementById('editId').value}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data, tipo, importo, descrizione })
+        });
+        closeModal();
+        updateAll();
     });
-    closeModal();
-    updateAll();
-
 
 document.getElementById('entryForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -103,7 +102,7 @@ document.getElementById('entryForm').addEventListener('submit', async function(e
     });
     document.getElementById('entryForm').reset();
     updateAll();
-});
+
 
 
 // GRAFICO A TORTA
