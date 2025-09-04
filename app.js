@@ -1,61 +1,53 @@
+
 const express = require('express');
-const path = require('path');
-const bodyParser = require('body-parser');
-const fs = require('fs');
-
+const { db, initDB } = require('./db');
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
+app.use(express.json());
 
-const DATA_FILE = path.join(__dirname, 'data.json');
+// Inizializza il database
+initDB();
 
-function readData() {
-    if (!fs.existsSync(DATA_FILE)) return { entries: [] };
-    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-}
-
-function writeData(data) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
-
-app.get('/api/summary', (req, res) => {
-    const { entries } = readData();
-    let totalIncome = 0, totalExpense = 0;
-    entries.forEach(e => {
-        if (e.type === 'income') totalIncome += e.amount;
-        else totalExpense += e.amount;
-    });
-    res.json({
-        totalIncome,
-        totalExpense,
-        savings: totalIncome - totalExpense
+// Ottieni tutti i movimenti
+app.get('/api/movimenti', (req, res) => {
+    db.all('SELECT * FROM movimenti ORDER BY data DESC', [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
     });
 });
 
-app.get('/api/entries', (req, res) => {
-    const { entries } = readData();
-    res.json(entries);
+// Aggiungi un movimento
+app.post('/api/movimenti', (req, res) => {
+    const { tipo, descrizione, importo, data } = req.body;
+    db.run(
+        'INSERT INTO movimenti (tipo, descrizione, importo, data) VALUES (?, ?, ?, ?)',
+        [tipo, descrizione, importo, data],
+        function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true, id: this.lastID });
+        }
+    );
 });
 
-
-// Utility per id univoco
-function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-}
-
-app.post('/api/entry', (req, res) => {
-    const { date, type, amount, description } = req.body;
-    if (!date || !type || !amount) return res.status(400).json({ error: 'Missing fields' });
-    const data = readData();
-    data.entries.push({ id: generateId(), date, type, amount: Number(amount), description });
-    writeData(data);
-    res.json({ success: true });
+// Riepilogo entrate/uscite/saldo
+app.get('/api/riepilogo', (req, res) => {
+    db.all('SELECT tipo, importo FROM movimenti', [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        let entrate = 0;
+        let uscite = 0;
+        rows.forEach(mov => {
+            if (mov.tipo === 'entrata') entrate += mov.importo;
+            else if (mov.tipo === 'uscita') uscite += mov.importo;
+        });
+        res.json({ entrate, uscite, saldo: entrate - uscite });
+    });
 });
 
-// Elimina una transazione
+app.listen(PORT, () => {
+    console.log(`Server avviato su http://localhost:${PORT}`);
+});
 app.delete('/api/entry/:id', (req, res) => {
     const { id } = req.params;
     const data = readData();
