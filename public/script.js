@@ -224,9 +224,10 @@ function populateYearSelect() {
     }
 }
 
-populateYearSelect();
 
-document.getElementById('monthSelect').addEventListener('change', updateAll);
-document.getElementById('yearSelect').addEventListener('change', updateAll);
-
-updateAll();
+document.addEventListener('DOMContentLoaded', () => {
+    populateYearSelect();
+    document.getElementById('monthSelect').addEventListener('change', updateAll);
+    document.getElementById('yearSelect').addEventListener('change', updateAll);
+    updateAll();
+});
