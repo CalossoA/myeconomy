@@ -3,7 +3,7 @@ async function updateSummary() {
     const data = await res.json();
     document.getElementById('totalIncome').textContent = data.entrate.toFixed(2);
     document.getElementById('totalExpense').textContent = data.uscite.toFixed(2);
-    document.getElementById('savings').textContent = data.saldo.toFixed(2);
+    document.getElementById('savings').textContent = (data.entrate - data.uscite).toFixed(2);
 }
 
 
@@ -108,10 +108,11 @@ async function updatePieChart() {
     const res = await fetch('/api/riepilogo');
     const data = await res.json();
     const ctx = document.getElementById('pieChart').getContext('2d');
+    const risparmi = data.entrate - data.uscite;
     const chartData = {
         labels: ['Entrate', 'Uscite', 'Risparmi'],
         datasets: [{
-            data: [data.entrate, data.uscite, Math.max(data.saldo, 0)],
+            data: [data.entrate, data.uscite, Math.max(risparmi, 0)],
             backgroundColor: ['#4caf50', '#e74c3c', '#3498db'],
             borderWidth: 1
         }]
