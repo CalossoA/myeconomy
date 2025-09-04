@@ -75,7 +75,7 @@ app.get('/api/riepilogo', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server avviato su http://localhost:${PORT}`);
+    console.log(`Server avviato sulla porta ${PORT}`);
 });
 app.delete('/api/entry/:id', (req, res) => {
     const { id } = req.params;
