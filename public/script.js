@@ -197,8 +197,10 @@ async function updateTrendChart() {
 
 
 function getSelectedMonthYear() {
-    const month = document.getElementById('monthSelect').value;
-    const year = document.getElementById('yearSelect').value;
+    const monthSel = document.getElementById('monthSelect');
+    const yearSel = document.getElementById('yearSelect');
+    const month = monthSel ? monthSel.value : '';
+    const year = yearSel ? yearSel.value : '';
     return { month, year };
 }
 
@@ -213,6 +215,7 @@ async function updateAll() {
 // Popola selettore anno dinamicamente
 function populateYearSelect() {
     const yearSelect = document.getElementById('yearSelect');
+    if (!yearSelect) return;
     const currentYear = new Date().getFullYear();
     yearSelect.innerHTML = '';
     for (let y = currentYear - 5; y <= currentYear + 1; y++) {
