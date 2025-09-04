@@ -94,11 +94,14 @@ app.get('/api/riepilogo', (req, res) => {
 app.get('/api/andamento', (req, res) => {
     try {
         let { year } = req.query;
+        console.log('Chiamata /api/andamento con year:', year);
         if (!year) {
             year = new Date().getFullYear();
         }
         const rows = db.prepare('SELECT tipo, importo, data FROM movimenti WHERE strftime("%Y", data) = ?').all(year);
+        console.log('Movimenti trovati:', rows);
         if (!rows || rows.length === 0) {
+            console.log('Nessun movimento per l’anno richiesto');
             return res.json([]);
         }
         // Aggrega per mese
@@ -108,6 +111,11 @@ app.get('/api/andamento', (req, res) => {
             stats[key] = { entrate: 0, uscite: 0, saldo: 0 };
         }
         rows.forEach(mov => {
+            // Controllo robusto sul formato data
+            if (!mov.data || !/^\d{4}-\d{2}-\d{2}$/.test(mov.data)) {
+                console.warn('Movimento con data non valida:', mov);
+                return;
+            }
             const mese = mov.data.slice(5,7);
             if (mov.tipo === 'entrata') stats[mese].entrate += mov.importo;
             else if (mov.tipo === 'uscita') stats[mese].uscite += mov.importo;
@@ -123,8 +131,10 @@ app.get('/api/andamento', (req, res) => {
             uscite: stats[mese].uscite,
             saldo: stats[mese].saldo
         }));
+        console.log('Risposta andamento:', result);
         res.json(result);
     } catch (err) {
+        console.error('Errore in /api/andamento:', err);
         res.status(500).json({ error: err.message });
     }
 });
