@@ -1,7 +1,7 @@
 const express = require('express');
 const { db, initDB } = require('./db');
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -140,7 +140,7 @@ app.get('/api/andamento', (req, res) => {
 });
 
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server avviato sulla porta ${PORT}`);
 });
 
