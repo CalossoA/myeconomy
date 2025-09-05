@@ -60,7 +60,7 @@ async function updateSummaryPieChartFromFilters() {
         document.getElementById('totalIncome').textContent = '0.00';
         document.getElementById('totalExpense').textContent = '0.00';
         document.getElementById('savings').textContent = '0.00';
-        updatePieChart(month, year, { entrate: 0, uscite: 0, saldo: 0 });
+        updatePieChart('all', 'all', { entrate: 0, uscite: 0, saldo: 0 });
         return;
     }
     const res = await fetch(url);
@@ -68,7 +68,7 @@ async function updateSummaryPieChartFromFilters() {
     document.getElementById('totalIncome').textContent = data.entrate.toFixed(2);
     document.getElementById('totalExpense').textContent = data.uscite.toFixed(2);
     document.getElementById('savings').textContent = data.saldo.toFixed(2);
-    updatePieChart(month, year, data);
+    updatePieChart('pie', 'pie', data); // forza update con dati dei filtri pie
 }
 
 
@@ -79,22 +79,27 @@ async function updateSummaryPieChartFromFilters() {
 // --- GRAFICO A TORTA ---
 let pieChart;
 async function updatePieChart(month, year, dataOverride) {
-    // Se dataOverride è passato, usa quello, altrimenti fetch
+    // Se chiamato da updateSummaryPieChartFromFilters, usa sempre i dati passati
     let data;
     if (dataOverride) {
         data = dataOverride;
     } else {
+        // Se chiamato da updateAll (non da filtri pie), prendi i filtri pie
+        let m = month, y = year;
+        if (month === 'pie' && year === 'pie') {
+            m = document.getElementById('pieMonth').value;
+            y = document.getElementById('pieYear').value;
+        }
         let url = '/api/riepilogo';
-        if (month !== 'all' && year !== 'all') {
-            url += `?mese=${month}&anno=${year}`;
-        } else if (year !== 'all') {
-            url += `?anno=${year}`;
+        if (y !== 'all' && m !== 'all') {
+            url += `?mese=${m}&anno=${y}`;
+        } else if (y !== 'all') {
+            url += `?anno=${y}`;
         }
         const res = await fetch(url);
         data = await res.json();
     }
     const ctx = document.getElementById('pieChart').getContext('2d');
-    // Migliora qualità e riduci dimensione
     ctx.canvas.width = 220;
     ctx.canvas.height = 220;
     const chartData = {
