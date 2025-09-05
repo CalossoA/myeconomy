@@ -50,19 +50,24 @@ async function updateSummaryPieChartFromFilters() {
     // Prendi valori dai filtri pie chart
     const month = document.getElementById('pieMonth').value;
     const year = document.getElementById('pieYear').value;
-    // Se selezionato mese, obbliga anche anno
     let url = '/api/riepilogo';
-    if (month !== 'all' && year !== 'all') {
+    if (year !== 'all' && month !== 'all') {
         url += `?mese=${month}&anno=${year}`;
     } else if (year !== 'all') {
         url += `?anno=${year}`;
+    } else if (month !== 'all') {
+        // Se selezioni solo mese, non ha senso: mostra tutto
+        document.getElementById('totalIncome').textContent = '0.00';
+        document.getElementById('totalExpense').textContent = '0.00';
+        document.getElementById('savings').textContent = '0.00';
+        updatePieChart(month, year, { entrate: 0, uscite: 0, saldo: 0 });
+        return;
     }
     const res = await fetch(url);
     const data = await res.json();
     document.getElementById('totalIncome').textContent = data.entrate.toFixed(2);
     document.getElementById('totalExpense').textContent = data.uscite.toFixed(2);
     document.getElementById('savings').textContent = data.saldo.toFixed(2);
-    // Aggiorna anche la torta
     updatePieChart(month, year, data);
 }
 
@@ -231,6 +236,12 @@ async function updateEntries(month, year, type) {
     if (type && type !== 'all') entries = entries.filter(e => e.tipo === type);
     const tbody = document.querySelector('#entriesTable tbody');
     tbody.innerHTML = '';
+    if (!entries.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="5" style="text-align:center;color:#888;">Nessun movimento trovato</td>`;
+        tbody.appendChild(tr);
+        return;
+    }
     entries.forEach(e => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -263,6 +274,51 @@ async function updateEntries(month, year, type) {
 }
 
 // --- INIZIALIZZAZIONE FILTRI E EVENTI ---
+// --- GRAFICA MODERNA ---
+function applyModernStyles() {
+    document.body.style.background = '#eaf0fa';
+    document.body.style.fontFamily = 'Inter, Arial, sans-serif';
+    document.querySelectorAll('.container').forEach(c => {
+        c.style.background = '#fff';
+        c.style.borderRadius = '18px';
+        c.style.boxShadow = '0 2px 16px 0 #b3c6e0';
+        c.style.padding = '32px 24px';
+        c.style.margin = '32px auto';
+        c.style.maxWidth = '480px';
+    });
+    document.querySelectorAll('input, select, button').forEach(el => {
+        el.style.borderRadius = '8px';
+        el.style.border = '1px solid #b3c6e0';
+        el.style.padding = '8px 10px';
+        el.style.marginRight = '8px';
+        el.style.fontSize = '1rem';
+    });
+    document.querySelectorAll('button').forEach(btn => {
+        btn.style.background = 'linear-gradient(90deg,#4caf50,#3498db)';
+        btn.style.color = '#fff';
+        btn.style.border = 'none';
+        btn.style.cursor = 'pointer';
+        btn.style.fontWeight = 'bold';
+        btn.onmouseover = () => btn.style.opacity = '0.85';
+        btn.onmouseleave = () => btn.style.opacity = '1';
+    });
+    document.querySelectorAll('table').forEach(t => {
+        t.style.width = '100%';
+        t.style.background = '#f8fbff';
+        t.style.borderRadius = '8px';
+        t.style.overflow = 'hidden';
+        t.style.marginBottom = '16px';
+    });
+    document.querySelectorAll('th, td').forEach(cell => {
+        cell.style.padding = '8px 6px';
+        cell.style.textAlign = 'center';
+    });
+    document.querySelectorAll('h2').forEach(h => {
+        h.style.color = '#2d3a4a';
+        h.style.marginTop = '16px';
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Popola select anni per i filtri movimenti
     populateYearSelect('movYear');
@@ -294,4 +350,5 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAll();
     });
     updateAll();
+    applyModernStyles();
 });
