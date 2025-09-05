@@ -27,7 +27,6 @@
 	max-width: 100%;
 	max-height: 100%;
 }
-.entries-filters {
 	display: flex;
 	gap: 16px;
 	align-items: center;
@@ -88,47 +87,6 @@ form input:focus, form select:focus {
 form button {
 	background: linear-gradient(90deg, #4a90e2 60%, #3498db 100%);
 	color: #fff;
-	border: none;
-	cursor: pointer;
-	font-weight: bold;
-	transition: background 0.2s, box-shadow 0.2s;
-	box-shadow: 0 2px 8px #4a90e222;
-}
-form button:hover {
-	background: linear-gradient(90deg, #357ab8 60%, #217dbb 100%);
-	box-shadow: 0 4px 16px #4a90e244;
-}
-.summary, .entries {
-	margin-top: 28px;
-}
-.summary {
-	background: #f7fafc;
-	border-radius: 12px;
-	padding: 20px 28px;
-	box-shadow: 0 2px 8px #3498db11;
-	border: 1.2px solid #eaf1fb;
-}
-.summary h2 {
-	color: #2a4d69;
-	margin-bottom: 10px;
-}
-.summary p {
-	font-size: 1.1em;
-	margin: 6px 0;
-}
-table {
-	width: 100%;
-	border-collapse: collapse;
-	margin-top: 10px;
-	background: #f7fafc;
-	border-radius: 12px;
-	overflow: hidden;
-	box-shadow: 0 2px 8px #3498db11;
-	border: 1.2px solid #eaf1fb;
-}
-th, td {
-	border: 1px solid #e3e8ee;
-	padding: 12px 8px;
 	text-align: center;
 	font-size: 1.04em;
 }
@@ -155,7 +113,133 @@ tr:hover { background: #d6eaf8; transition: background 0.2s; }
 	background: #d0e6fa;
 	color: #217dbb;
 }
-.delete-btn:hover {
+
+/* Miglioramenti mobile e card Bootstrap */
+@media (max-width: 600px) {
+	.pie-chart-container, .trend-chart-container, .annual-chart-container {
+		width: 100vw;
+		min-width: 0;
+		padding: 0;
+		margin-bottom: 18px;
+		overflow-x: auto;
+		display: flex;
+		justify-content: center;
+	}
+	.pie-chart-container canvas, .trend-chart-container canvas, .annual-chart-container canvas {
+		max-width: 98vw;
+		min-width: 220px;
+		height: auto;
+		margin: 0 auto;
+		display: block;
+	}
+	table {
+		display: none;
+	}
+	.entries-table-mobile {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		margin-top: 10px;
+	}
+	.entry-card {
+		background: #f7fafc;
+		border-radius: 1rem;
+		box-shadow: 0 2px 8px #3498db22;
+		border: 1.5px solid #eaf1fb;
+		padding: 18px 16px 12px 16px;
+		font-size: 1.08em;
+		margin-bottom: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		transition: box-shadow 0.2s;
+		position: relative;
+	}
+	.entry-card-row {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: 6px;
+		font-size: 1em;
+		gap: 8px;
+	}
+	.entry-card-label {
+		font-weight: 600;
+		color: #2a4d69;
+		margin-right: 6px;
+		min-width: 90px;
+		flex-shrink: 0;
+	}
+	.entry-card-actions {
+		display: flex;
+		gap: 10px;
+		margin-top: 10px;
+		justify-content: flex-end;
+	}
+	.edit-btn, .delete-btn {
+		font-size: 1.2em;
+		padding: 8px 14px;
+		border-radius: 8px;
+		border: none;
+		background: #eaf1fb;
+		color: #217dbb;
+		transition: background 0.2s, color 0.2s;
+	}
+	.edit-btn:hover {
+		background: #d0e6fa;
+		color: #217dbb;
+	}
+	.delete-btn:hover {
+		background: #ffd6d6;
+		color: #c0392b;
+	}
+	.entry-card .edit-btn, .entry-card .delete-btn {
+		font-size: 1.3em;
+		background: none;
+		color: #217dbb;
+		border: none;
+		padding: 0 8px;
+	}
+	.entry-card .edit-btn:hover {
+		color: #357ab8;
+	}
+	.entry-card .delete-btn:hover {
+		color: #c0392b;
+	}
+	.entry-card:last-child {
+		margin-bottom: 0;
+	}
+}
+
+@media (min-width: 601px) {
+	.entries-table-mobile {
+		display: none !important;
+	}
+}
+
+/* Migliora overflow e padding input Bootstrap */
+.form-control, .form-select {
+	min-width: 0;
+	box-sizing: border-box;
+	padding: 0.5rem 0.75rem;
+	font-size: 1.08em;
+}
+
+/* Fix grafici Chart.js per non stretchare su mobile */
+.pie-chart-container canvas, .trend-chart-container canvas, .annual-chart-container canvas {
+	width: 100% !important;
+	height: auto !important;
+	max-width: 420px;
+	min-width: 220px;
+	margin: 0 auto;
+	display: block;
+}
+
+/* Migliora la modale con Bootstrap */
+.modal-content {
+	border-radius: 1.2rem;
+	box-shadow: 0 4px 24px #3498db22;
+	border: 1.5px solid #eaf1fb;
+	padding: 2rem 1.2rem 1.2rem 1.2rem;
+}
 	background: #ffd6d6;
 	color: #c0392b;
 }

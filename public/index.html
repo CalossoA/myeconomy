@@ -3,23 +3,34 @@
     <meta charset="UTF-8">
     <title>Gestione Economia</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <form id="entryForm">
-            <input type="date" id="date" required>
-            <select id="type">
-                <option value="income">Entrata</option>
-                <option value="expense">Uscita</option>
-            </select>
-            <input type="number" id="amount" placeholder="Importo" required min="0" step="0.01">
-            <input type="text" id="description" placeholder="Descrizione">
-            <button type="submit">Aggiungi</button>
+    <div class="container py-3 px-1 px-sm-3">
+        <form id="entryForm" class="row g-2 mb-3">
+            <div class="col-12 text-center mb-1">
+                <span id="todayDate" class="fw-bold fs-5"></span>
+            </div>
+            <div class="col-12 col-sm-3">
+                <select id="type" class="form-select">
+                    <option value="income">Entrata</option>
+                    <option value="expense">Uscita</option>
+                </select>
+            </div>
+            <div class="col-12 col-sm-3">
+                <input type="number" id="amount" class="form-control" placeholder="Importo" required min="0" step="0.01">
+            </div>
+            <div class="col-12 col-sm-4">
+                <input type="text" id="description" class="form-control" placeholder="Descrizione">
+            </div>
+            <div class="col-12 col-sm-2 d-grid">
+                <button type="submit" class="btn btn-primary fw-bold">Aggiungi</button>
+            </div>
         </form>
 
         <!-- FILTRI PIE CHART -->
-    <div class="pie-filters">
+    <div class="pie-filters row g-2 align-items-center mb-2">
             <strong>Grafico a torta:</strong>
             <label for="pieMonth">Mese:</label>
             <select id="pieMonth">
@@ -40,7 +51,7 @@
             <label for="pieYear">Anno:</label>
             <select id="pieYear"></select>
         </div>
-        <div class="summary">
+    <div class="summary mb-3">
             <h2>Riepilogo</h2>
             <p>Entrate: <span id="totalIncome">0</span> €</p>
             <p>Uscite: <span id="totalExpense">0</span> €</p>
@@ -51,23 +62,23 @@
         </div>
 
         <!-- FILTRI ANDAMENTO -->
-    <div class="trend-filters">
+    <div class="trend-filters row g-2 align-items-center mb-2">
             <strong>Andamento mensile:</strong>
             <label for="trendYear">Anno:</label>
             <select id="trendYear"></select>
         </div>
-        <div class="trend-chart-container">
+    <div class="trend-chart-container mb-3">
             <canvas id="trendChart" width="500" height="200"></canvas>
         </div>
-        <div class="annual-chart-container">
+    <div class="annual-chart-container mb-3">
             <h3 style="text-align:center;margin-bottom:8px;color:#217dbb;">Andamento annuale</h3>
             <canvas id="annualChart" width="500" height="200"></canvas>
         </div>
 
         <!-- FILTRI E TABELLA MOVIMENTI (unica sezione) -->
-        <div class="entries">
+    <div class="entries">
             <h2>Movimenti</h2>
-            <div class="entries-filters">
+            <div class="entries-filters row g-2 align-items-center mb-2">
                 <label for="movType">Tipo:</label>
                 <select id="movType">
                     <option value="all">Tutti</option>
@@ -93,7 +104,7 @@
                 <label for="movYear">Anno:</label>
                 <select id="movYear"></select>
             </div>
-            <table id="entriesTable">
+            <table id="entriesTable" class="table table-striped table-bordered table-hover align-middle">
                 <thead>
                     <tr>
                         <th>Data</th>
@@ -112,20 +123,31 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Modifica Transazione</h2>
-                <form id="editForm">
+                <form id="editForm" class="row g-2">
                     <input type="hidden" id="editId">
-                    <input type="date" id="editDate" required title="Data">
-                    <select id="editType" title="Tipo">
-                        <option value="income">Entrata</option>
-                        <option value="expense">Uscita</option>
-                    </select>
-                    <input type="number" id="editAmount" placeholder="Importo" required min="0" step="0.01">
-                    <input type="text" id="editDescription" placeholder="Descrizione">
-                    <button type="submit">Salva</button>
+                    <div class="col-12 col-sm-4">
+                        <input type="date" id="editDate" class="form-control" required title="Data">
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <select id="editType" class="form-select" title="Tipo">
+                            <option value="income">Entrata</option>
+                            <option value="expense">Uscita</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <input type="number" id="editAmount" class="form-control" placeholder="Importo" required min="0" step="0.01">
+                    </div>
+                    <div class="col-12">
+                        <input type="text" id="editDescription" class="form-control" placeholder="Descrizione">
+                    </div>
+                    <div class="col-12 d-grid">
+                        <button type="submit" class="btn btn-success">Salva</button>
+                    </div>
                 </form>
             </div>
-    </div>
+        </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
