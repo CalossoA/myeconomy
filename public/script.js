@@ -348,4 +348,7 @@ function applyModernStyles() {
                     }
                 });
             }
-        }
+        }}
+    )
+
+    }
