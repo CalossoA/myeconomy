@@ -138,7 +138,7 @@ async function updatePieChart(month, year) {
 }
 }
 
-let trendChart;
+// let trendChart; // già dichiarata sopra, non ridichiarare
 async function updateTrendChart() {
     const yearSel = document.getElementById('yearSelect');
     const year = yearSel ? yearSel.value : new Date().getFullYear();
@@ -207,6 +207,7 @@ async function updateTrendChart() {
 }
 
 
+
 // --- GRAFICO A TORTA ---
 let pieChart;
 async function updatePieChart(month, year) {
@@ -241,9 +242,10 @@ async function updatePieChart(month, year) {
     }
 }
 
-// --- 3 MINI-GRAFICI ANDAMENTO ---
-let incomeChart, expenseChart, savingsChart;
-async function updateMiniCharts(year) {
+// --- GRAFICO ANDAMENTO UNICO ---
+let trendChart;
+async function updateTrendChart(month, year) {
+    // Il backend accetta solo year, ma il filtro mese serve per la tabella e la torta
     if (!year || year === 'all') year = new Date().getFullYear();
     const res = await fetch(`/api/andamento?year=${year}`);
     const data = await res.json();
@@ -251,70 +253,58 @@ async function updateMiniCharts(year) {
     const entrate = data.map(d => d.entrate);
     const uscite = data.map(d => d.uscite);
     const saldo = data.map(d => d.saldo);
-    // Entrate
-    const ctxIncome = document.getElementById('incomeChart').getContext('2d');
-    const incomeData = {
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    const chartData = {
         labels,
-        datasets: [{
-            label: 'Entrate',
-            data: entrate,
-            borderColor: '#4caf50',
-            backgroundColor: 'rgba(76,175,80,0.2)',
-            fill: true
-        }]
+        datasets: [
+            {
+                label: 'Entrate',
+                data: entrate,
+                borderColor: '#4caf50',
+                backgroundColor: 'rgba(76,175,80,0.1)',
+                fill: false
+            },
+            {
+                label: 'Uscite',
+                data: uscite,
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231,76,60,0.1)',
+                fill: false
+            },
+            {
+                label: 'Risparmi',
+                data: saldo,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52,152,219,0.1)',
+                fill: false
+            }
+        ]
     };
-    if (incomeChart) { incomeChart.data = incomeData; incomeChart.update(); }
-    else {
-        incomeChart = new Chart(ctxIncome, {
-            type: 'line', data: incomeData,
-            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-    }
-    // Uscite
-    const ctxExpense = document.getElementById('expenseChart').getContext('2d');
-    const expenseData = {
-        labels,
-        datasets: [{
-            label: 'Uscite',
-            data: uscite,
-            borderColor: '#e74c3c',
-            backgroundColor: 'rgba(231,76,60,0.2)',
-            fill: true
-        }]
-    };
-    if (expenseChart) { expenseChart.data = expenseData; expenseChart.update(); }
-    else {
-        expenseChart = new Chart(ctxExpense, {
-            type: 'line', data: expenseData,
-            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-    }
-    // Risparmi
-    const ctxSavings = document.getElementById('savingsChart').getContext('2d');
-    const savingsData = {
-        labels,
-        datasets: [{
-            label: 'Risparmi',
-            data: saldo,
-            borderColor: '#3498db',
-            backgroundColor: 'rgba(52,152,219,0.2)',
-            fill: true
-        }]
-    };
-    if (savingsChart) { savingsChart.data = savingsData; savingsChart.update(); }
-    else {
-        savingsChart = new Chart(ctxSavings, {
-            type: 'line', data: savingsData,
-            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    if (trendChart) {
+        trendChart.data = chartData;
+        trendChart.update();
+    } else {
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                plugins: {
+                    legend: { display: true, position: 'bottom' },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
         });
     }
 }
 
-// --- FILTRI E LOGICA SINCRONIZZATA ---
-function getSelectedFilters(prefix = '') {
-    const monthSel = document.getElementById(prefix + 'monthFilter');
-    const yearSel = document.getElementById(prefix + 'yearFilter');
-    const typeSel = document.getElementById(prefix + 'typeFilter');
+// --- FILTRI E LOGICA UNIFICATA ---
+function getSelectedFilters() {
+    const monthSel = document.getElementById('monthFilter');
+    const yearSel = document.getElementById('yearFilter');
+    const typeSel = document.getElementById('typeFilter');
     const month = monthSel ? monthSel.value : '';
     const year = yearSel ? yearSel.value : '';
     const type = typeSel ? typeSel.value : '';
@@ -322,17 +312,14 @@ function getSelectedFilters(prefix = '') {
 }
 
 async function updateAll() {
-    // Filtri per grafici principali
-    const { month, year } = getSelectedFilters('');
+    const { month, year, type } = getSelectedFilters();
     await updateSummary(month, year);
     await updatePieChart(month, year);
-    await updateMiniCharts(year);
-    // Filtri per lista movimenti
-    const { month: m2, year: y2, type: t2 } = getSelectedFilters('Mov');
-    await updateEntries(m2, y2, t2);
+    await updateTrendChart(month, year);
+    await updateEntries(month, year, type);
 }
 
-// Popola selettori anno dinamicamente
+// Popola selettore anno dinamicamente
 function populateYearFilter(id) {
     const yearFilter = document.getElementById(id);
     if (!yearFilter) return;
@@ -393,14 +380,8 @@ async function updateEntries(month, year, type) {
 // --- INIZIALIZZAZIONE FILTRI E EVENTI ---
 document.addEventListener('DOMContentLoaded', () => {
     populateYearFilter('yearFilter');
-    populateYearFilter('yearFilterMov');
-    // Eventi filtri grafici
     document.getElementById('typeFilter').addEventListener('change', updateAll);
     document.getElementById('monthFilter').addEventListener('change', updateAll);
     document.getElementById('yearFilter').addEventListener('change', updateAll);
-    // Eventi filtri movimenti
-    document.getElementById('typeFilterMov').addEventListener('change', updateAll);
-    document.getElementById('monthFilterMov').addEventListener('change', updateAll);
-    document.getElementById('yearFilterMov').addEventListener('change', updateAll);
     updateAll();
 });

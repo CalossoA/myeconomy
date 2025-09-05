@@ -131,32 +131,33 @@
                     <input type="text" id="editDescription" placeholder="Descrizione">
                     <button type="submit">Salva</button>
                 </form>
-            </div>
-        </div>
-        </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js"></script>
-</body>
-</html>
-                <canvas id="pieChart" width="400" height="400"></canvas>
-            </div>
-            <div style="margin-bottom: 32px;">
-                <h3>Andamento mensile</h3>
-                <canvas id="trendChart" width="600" height="300"></canvas>
-            </div>
-        </div>
-        <div class="entries">
-            <h2>Movimenti</h2>
-            <table id="entriesTable">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Tipo</th>
-                        <th>Importo</th>
-                        <th>Descrizione</th>
-                        <th>Azioni</th>
-                    </tr>
+                        <!-- FILTRI UNIFICATI -->
+                        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+                            <label for="typeFilter">Tipo:</label>
+                            <select id="typeFilter">
+                                <option value="all">Tutti</option>
+                                <option value="entrata">Entrata</option>
+                                <option value="uscita">Uscita</option>
+                            </select>
+                            <label for="monthFilter">Mese:</label>
+                            <select id="monthFilter">
+                                <option value="all">Tutti</option>
+                                <option value="01">Gennaio</option>
+                                <option value="02">Febbraio</option>
+                                <option value="03">Marzo</option>
+                                <option value="04">Aprile</option>
+                                <option value="05">Maggio</option>
+                                <option value="06">Giugno</option>
+                                <option value="07">Luglio</option>
+                                <option value="08">Agosto</option>
+                                <option value="09">Settembre</option>
+                                <option value="10">Ottobre</option>
+                                <option value="11">Novembre</option>
+                                <option value="12">Dicembre</option>
+                            </select>
+                            <label for="yearFilter">Anno:</label>
+                            <select id="yearFilter"></select>
+                        </div>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -166,20 +167,10 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Modifica Transazione</h2>
-                <form id="editForm">
-                    <input type="hidden" id="editId">
-                    <input type="date" id="editDate" required>
-                    <select id="editType">
-                        <option value="income">Entrata</option>
-                        <option value="expense">Uscita</option>
-                    </select>
-                    <input type="number" id="editAmount" placeholder="Importo" required min="0" step="0.01">
-                    <input type="text" id="editDescription" placeholder="Descrizione">
-                    <button type="submit">Salva</button>
-                </form>
-            </div>
-        </div>
-        </div>
+                                <div style="margin-bottom: 32px;">
+                                    <h3>Andamento mensile</h3>
+                                    <canvas id="trendChart" width="600" height="300"></canvas>
+                                </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
