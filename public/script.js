@@ -106,10 +106,10 @@ async function updateTrendChart(month, year) {
 }
 
 // --- FILTRI E LOGICA UNIFICATA ---
-function getSelectedFilters() {
-    const monthSel = document.getElementById('monthFilter');
-    const yearSel = document.getElementById('yearFilter');
-    const typeSel = document.getElementById('typeFilter');
+function getMovFilters() {
+    const monthSel = document.getElementById('movMonth');
+    const yearSel = document.getElementById('movYear');
+    const typeSel = document.getElementById('movType');
     const month = monthSel ? monthSel.value : '';
     const year = yearSel ? yearSel.value : '';
     const type = typeSel ? typeSel.value : '';
@@ -117,7 +117,7 @@ function getSelectedFilters() {
 }
 
 async function updateAll() {
-    const { month, year, type } = getSelectedFilters();
+    const { month, year, type } = getMovFilters();
     await updateSummary(month, year);
     await updatePieChart(month, year);
     await updateTrendChart(month, year);
@@ -125,17 +125,17 @@ async function updateAll() {
 }
 
 // Popola selettore anno dinamicamente
-function populateYearFilter(id) {
-    const yearFilter = document.getElementById(id);
-    if (!yearFilter) return;
+function populateYearSelect(id) {
+    const sel = document.getElementById(id);
+    if (!sel) return;
     const currentYear = new Date().getFullYear();
-    yearFilter.innerHTML = '<option value="all">Tutti</option>';
+    sel.innerHTML = '<option value="all">Tutti</option>';
     for (let y = currentYear - 5; y <= currentYear + 1; y++) {
         const opt = document.createElement('option');
         opt.value = String(y);
         opt.textContent = String(y);
         if (y === currentYear) opt.selected = true;
-        yearFilter.appendChild(opt);
+        sel.appendChild(opt);
     }
 }
 
@@ -184,9 +184,34 @@ async function updateEntries(month, year, type) {
 
 // --- INIZIALIZZAZIONE FILTRI E EVENTI ---
 document.addEventListener('DOMContentLoaded', () => {
-    populateYearFilter('yearFilter');
-    document.getElementById('typeFilter').addEventListener('change', updateAll);
-    document.getElementById('monthFilter').addEventListener('change', updateAll);
-    document.getElementById('yearFilter').addEventListener('change', updateAll);
+    // Popola select anni per i filtri movimenti
+    populateYearSelect('movYear');
+    // Eventi filtri movimenti
+    document.getElementById('movType').addEventListener('change', updateAll);
+    document.getElementById('movMonth').addEventListener('change', updateAll);
+    document.getElementById('movYear').addEventListener('change', updateAll);
+    // Eventi filtri grafici
+    populateYearSelect('pieYear');
+    populateYearSelect('trendYear');
+    document.getElementById('pieMonth').addEventListener('change', () => updatePieChart());
+    document.getElementById('pieYear').addEventListener('change', () => updatePieChart());
+    document.getElementById('trendYear').addEventListener('change', () => updateTrendChart());
+    // Form aggiunta movimento
+    const entryForm = document.getElementById('entryForm');
+    entryForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const date = document.getElementById('date').value;
+        const type = document.getElementById('type').value === 'income' ? 'entrata' : 'uscita';
+        const amount = parseFloat(document.getElementById('amount').value);
+        const description = document.getElementById('description').value;
+        if (!date || isNaN(amount)) return;
+        await fetch('/api/movimenti', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: date, tipo: type, importo: amount, descrizione: description })
+        });
+        entryForm.reset();
+        updateAll();
+    });
     updateAll();
 });

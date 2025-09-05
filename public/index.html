@@ -90,31 +90,15 @@
         </div>
         <div class="entries">
             <h2>Movimenti</h2>
-            <table id="entriesTable">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Tipo</th>
-                        <th>Importo</th>
-                        <th>Descrizione</th>
-                        <th>Azioni</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-        </div>
-        <div class="entries">
-            <h2>Movimenti</h2>
             <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
-                <label for="typeFilterMov">Tipo:</label>
-                <select id="typeFilterMov">
+                <label for="movType">Tipo:</label>
+                <select id="movType">
                     <option value="all">Tutti</option>
                     <option value="entrata">Entrata</option>
                     <option value="uscita">Uscita</option>
                 </select>
-                <label for="monthFilterMov">Mese:</label>
-                <select id="monthFilterMov">
+                <label for="movMonth">Mese:</label>
+                <select id="movMonth">
                     <option value="all">Tutti</option>
                     <option value="01">Gennaio</option>
                     <option value="02">Febbraio</option>
@@ -129,8 +113,8 @@
                     <option value="11">Novembre</option>
                     <option value="12">Dicembre</option>
                 </select>
-                <label for="yearFilterMov">Anno:</label>
-                <select id="yearFilterMov"></select>
+                <label for="movYear">Anno:</label>
+                <select id="movYear"></select>
             </div>
             <table id="entriesTable">
                 <thead>
