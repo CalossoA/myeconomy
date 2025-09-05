@@ -19,7 +19,7 @@
         </form>
 
         <!-- FILTRI PIE CHART -->
-        <div style="margin-top:32px; margin-bottom:8px; display:flex; gap:16px; align-items:center;">
+    <div class="pie-filters">
             <strong>Grafico a torta:</strong>
             <label for="pieMonth">Mese:</label>
             <select id="pieMonth">
@@ -45,25 +45,29 @@
             <p>Entrate: <span id="totalIncome">0</span> €</p>
             <p>Uscite: <span id="totalExpense">0</span> €</p>
             <p>Risparmi: <span id="savings">0</span> €</p>
-            <div style="margin-bottom: 32px; display: flex; justify-content: center;">
-                <canvas id="pieChart" width="220" height="220" style="max-width:220px; max-height:220px;"></canvas>
+            <div class="pie-chart-container">
+                <canvas id="pieChart" width="220" height="220"></canvas>
             </div>
         </div>
 
         <!-- FILTRI ANDAMENTO -->
-        <div style="margin-top:32px; margin-bottom:8px; display:flex; gap:16px; align-items:center;">
+    <div class="trend-filters">
             <strong>Andamento mensile:</strong>
             <label for="trendYear">Anno:</label>
             <select id="trendYear"></select>
         </div>
-        <div style="margin-bottom: 32px; display: flex; justify-content: center;">
-            <canvas id="trendChart" width="500" height="200" style="max-width:500px; max-height:200px;"></canvas>
+        <div class="trend-chart-container">
+            <canvas id="trendChart" width="500" height="200"></canvas>
+        </div>
+        <div class="annual-chart-container">
+            <h3 style="text-align:center;margin-bottom:8px;color:#217dbb;">Andamento annuale</h3>
+            <canvas id="annualChart" width="500" height="200"></canvas>
         </div>
 
         <!-- FILTRI E TABELLA MOVIMENTI (unica sezione) -->
         <div class="entries">
             <h2>Movimenti</h2>
-            <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+            <div class="entries-filters">
                 <label for="movType">Tipo:</label>
                 <select id="movType">
                     <option value="all">Tutti</option>
@@ -109,8 +113,8 @@
                 <h2>Modifica Transazione</h2>
                 <form id="editForm">
                     <input type="hidden" id="editId">
-                    <input type="date" id="editDate" required>
-                    <select id="editType">
+                    <input type="date" id="editDate" required title="Data">
+                    <select id="editType" title="Tipo">
                         <option value="income">Entrata</option>
                         <option value="expense">Uscita</option>
                     </select>
@@ -118,17 +122,7 @@
                     <input type="text" id="editDescription" placeholder="Descrizione">
                     <button type="submit">Salva</button>
                 </form>
-                        <!-- ...filtro duplicato rimosso... -->
-        </div>
-        <!-- Modale modifica -->
-        <div id="editModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>Modifica Transazione</h2>
-                                <div style="margin-bottom: 32px;">
-                                    <h3>Andamento mensile</h3>
-                                    <canvas id="trendChart" width="600" height="300"></canvas>
-                                </div>
+            </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>

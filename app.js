@@ -12,15 +12,15 @@ initDB();
 // Ottieni tutti i movimenti
 app.get('/api/movimenti', (req, res) => {
     try {
-        let { month, year, tipo } = req.query;
+        let { mese, anno, tipo } = req.query;
         let query = 'SELECT * FROM movimenti';
         let params = [];
-        if (month && year) {
+        if (mese && anno) {
             query += " WHERE strftime('%m', data) = ? AND strftime('%Y', data) = ?";
-            params = [month.padStart(2, '0'), year];
-        } else if (year) {
+            params = [mese.padStart(2, '0'), anno];
+        } else if (anno) {
             query += " WHERE strftime('%Y', data) = ?";
-            params = [year];
+            params = [anno];
         }
         // Filtro per tipo (entrata/uscita) se richiesto
         if (tipo && tipo !== 'all') {
@@ -81,26 +81,32 @@ app.put('/api/movimenti/:id', (req, res) => {
 // Riepilogo entrate/uscite/saldo
 app.get('/api/riepilogo', (req, res) => {
     try {
-        let { month, year } = req.query;
+        let { mese, anno } = req.query;
         let query = 'SELECT tipo, importo, data FROM movimenti';
         let params = [];
-        if (month && year) {
+        console.log('--- /api/riepilogo ---');
+        console.log('Query params:', req.query);
+        if (mese && anno) {
             query += " WHERE strftime('%m', data) = ? AND strftime('%Y', data) = ?";
-            params = [month.padStart(2, '0'), year];
-        } else if (year) {
+            params = [mese.padStart(2, '0'), anno];
+        } else if (anno) {
             query += " WHERE strftime('%Y', data) = ?";
-            params = [year];
+            params = [anno];
         }
-        // Se solo mese senza anno, non ha senso: restituisci tutto (o 0)
+        console.log('SQL:', query);
+        console.log('Params:', params);
         const rows = db.prepare(query).all(...params);
+        console.log('Rows:', rows);
         let entrate = 0;
         let uscite = 0;
         rows.forEach(mov => {
             if (mov.tipo === 'entrata') entrate += mov.importo;
             else if (mov.tipo === 'uscita') uscite += mov.importo;
         });
+        console.log('Entrate:', entrate, 'Uscite:', uscite, 'Saldo:', entrate - uscite);
         res.json({ entrate, uscite, saldo: entrate - uscite });
     } catch (err) {
+        console.error('Errore in /api/riepilogo:', err);
         res.status(500).json({ error: err.message });
     }
 });

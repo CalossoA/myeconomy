@@ -1,86 +1,42 @@
-// --- MODIFICA MOVIMENTO ---
-function openEditModal(id) {
-    // Trova il movimento da modificare
-    fetch(`/api/movimenti?id=${id}`)
-        .then(res => res.json())
-        .then(entry => {
-            // entry può essere array o oggetto singolo
-            if (Array.isArray(entry)) entry = entry[0];
-            document.getElementById('editId').value = entry.id;
-            document.getElementById('editDate').value = entry.data;
-            document.getElementById('editType').value = entry.tipo === 'entrata' ? 'income' : 'expense';
-            document.getElementById('editAmount').value = entry.importo;
-            document.getElementById('editDescription').value = entry.descrizione || '';
-            document.getElementById('editModal').style.display = 'block';
-        });
-}
-
-// Chiudi modale
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('#editModal .close').forEach(btn => {
-        btn.onclick = function() {
-            document.getElementById('editModal').style.display = 'none';
-        };
-    });
-    // Salva modifica
-    document.getElementById('editForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const id = document.getElementById('editId').value;
-        const data = document.getElementById('editDate').value;
-        const tipo = document.getElementById('editType').value === 'income' ? 'entrata' : 'uscita';
-        const importo = parseFloat(document.getElementById('editAmount').value);
-        const descrizione = document.getElementById('editDescription').value;
-        await fetch(`/api/movimenti/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data, tipo, importo, descrizione })
-        });
-        document.getElementById('editModal').style.display = 'none';
-        updateAll();
-    });
-    // Chiudi modale cliccando fuori
-    window.onclick = function(event) {
-        const modal = document.getElementById('editModal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    };
-});
-async function updateSummaryPieChartFromFilters() {
-    // Prendi valori dai filtri pie chart
-    const month = document.getElementById('pieMonth').value;
-    const year = document.getElementById('pieYear').value;
+// --- RIEPILOGO ---
+async function updateSummary(month, year) {
     let url = '/api/riepilogo';
-    if (month !== 'all' && year === 'all') {
-        // Se selezioni solo mese, chiedi anche l'anno (non aggiorna nulla finché non selezioni anno)
-        document.getElementById('totalIncome').textContent = '0.00';
-        document.getElementById('totalExpense').textContent = '0.00';
-        document.getElementById('savings').textContent = '0.00';
-        updatePieChart('all', 'all', { entrate: 0, uscite: 0, saldo: 0 });
-        return;
-    }
-    if (year !== 'all' && month !== 'all') {
-        url += `?mese=${month}&anno=${year}`;
-    } else if (year !== 'all') {
-        url += `?anno=${year}`;
-    }
+    if (month && year) url += `?mese=${month}&anno=${year}`;
     const res = await fetch(url);
     const data = await res.json();
     document.getElementById('totalIncome').textContent = data.entrate.toFixed(2);
     document.getElementById('totalExpense').textContent = data.uscite.toFixed(2);
     document.getElementById('savings').textContent = data.saldo.toFixed(2);
-    updatePieChart(month, year, data);
 }
 
+// --- MOVIMENTI ---
+async function updateEntries(month, year) {
+    let url = '/api/movimenti';
+    if (month && year) url += `?mese=${month}&anno=${year}`;
+    const res = await fetch(url);
+    const entries = await res.json();
+    const tbody = document.querySelector('#entriesTable tbody');
+    tbody.innerHTML = '';
+    entries.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${e.data}</td>
+            <td>${e.tipo === 'entrata' ? 'Entrata' : (e.tipo === 'uscita' ? 'Uscita' : e.tipo)}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
 
-// ...funzione aggiorna movimenti rimossa perché duplicata e con errori di annidamento...
-
-
-
-// --- GRAFICO A TORTA ---
+// --- PIE CHART ---
 let pieChart;
-function updatePieChart(month, year, dataOverride) {
-    // Usa sempre i dati passati (mai fetch qui!)
+async function updatePieChart(month, year, dataOverride) {
+    if (!dataOverride) {
+        let url = '/api/riepilogo';
+        if (month && month !== 'all') url += `?mese=${month}`;
+        if (year && year !== 'all') url += (url.includes('?') ? '&' : '?') + `anno=${year}`;
+        const res = await fetch(url);
+        dataOverride = await res.json();
+    }
     const data = dataOverride;
     const ctx = document.getElementById('pieChart').getContext('2d');
     ctx.canvas.width = 220;
@@ -112,10 +68,9 @@ function updatePieChart(month, year, dataOverride) {
     }
 }
 
-// --- GRAFICO ANDAMENTO UNICO ---
+// --- TREND CHART MENSILE ---
 let trendChart;
 async function updateTrendChart() {
-    // Prendi anno dal filtro trend
     let year = document.getElementById('trendYear').value;
     if (!year || year === 'all') year = new Date().getFullYear();
     const res = await fetch(`/api/andamento?year=${year}`);
@@ -125,58 +80,166 @@ async function updateTrendChart() {
     const uscite = data.map(d => d.uscite);
     const saldo = data.map(d => d.saldo);
     const ctx = document.getElementById('trendChart').getContext('2d');
-    // Migliora qualità
     ctx.canvas.width = 500;
-    ctx.canvas.height = 200;
+    ctx.canvas.height = 220;
     const chartData = {
         labels,
         datasets: [
             {
                 label: 'Entrate',
                 data: entrate,
-                borderColor: '#4caf50',
-                backgroundColor: 'rgba(76,175,80,0.1)',
-                fill: false
+                backgroundColor: 'rgba(76,175,80,0.7)',
+                borderColor: '#388e3c',
+                borderWidth: 2,
+                borderRadius: 8,
+                categoryPercentage: 0.5,
+                barPercentage: 0.8
             },
             {
                 label: 'Uscite',
                 data: uscite,
-                borderColor: '#e74c3c',
-                backgroundColor: 'rgba(231,76,60,0.1)',
-                fill: false
+                backgroundColor: 'rgba(231,76,60,0.7)',
+                borderColor: '#c0392b',
+                borderWidth: 2,
+                borderRadius: 8,
+                categoryPercentage: 0.5,
+                barPercentage: 0.8
             },
             {
                 label: 'Risparmi',
                 data: saldo,
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52,152,219,0.1)',
-                fill: false
+                backgroundColor: 'rgba(52,152,219,0.7)',
+                borderColor: '#217dbb',
+                borderWidth: 2,
+                borderRadius: 8,
+                categoryPercentage: 0.5,
+                barPercentage: 0.8
             }
         ]
     };
     if (trendChart) {
         trendChart.data = chartData;
+        trendChart.options.plugins.legend.labels.font = { size: 15, weight: 'bold' };
         trendChart.update();
     } else {
         trendChart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: chartData,
             options: {
                 plugins: {
-                    legend: { display: true, position: 'bottom' },
+                    legend: { display: true, position: 'bottom', labels: { font: { size: 15, weight: 'bold' } } },
                     tooltip: { enabled: true }
                 },
                 responsive: false,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true }
-                }
+                    y: { beginAtZero: true, grid: { color: '#e0e0e0' }, ticks: { color: '#2a4d69', font: { size: 13 } } },
+                    x: { grid: { color: '#f0f0f0' }, ticks: { color: '#2a4d69', font: { size: 13 } } }
+                },
+                animation: { duration: 900, easing: 'easeOutQuart' }
             }
         });
     }
 }
 
-// --- FILTRI E LOGICA UNIFICATA ---
+// --- GRAFICO ANDAMENTO ANNUALE ---
+let annualChart;
+async function updateAnnualChart() {
+    const res = await fetch('/api/movimenti');
+    const data = await res.json();
+    const stats = {};
+    data.forEach(mov => {
+        const year = mov.data.slice(0, 4);
+        if (!stats[year]) stats[year] = { entrate: 0, uscite: 0, saldo: 0 };
+        if (mov.tipo === 'entrata') stats[year].entrate += mov.importo;
+        else if (mov.tipo === 'uscita') stats[year].uscite += mov.importo;
+    });
+    Object.keys(stats).forEach(anno => {
+        stats[anno].saldo = stats[anno].entrate - stats[anno].uscite;
+    });
+    const labels = Object.keys(stats).sort();
+    const entrate = labels.map(y => stats[y].entrate);
+    const uscite = labels.map(y => stats[y].uscite);
+    const saldo = labels.map(y => stats[y].saldo);
+    const ctx = document.getElementById('annualChart').getContext('2d');
+    ctx.canvas.width = 500;
+    ctx.canvas.height = 220;
+    const chartData = {
+        labels,
+        datasets: [
+            {
+                label: 'Entrate',
+                data: entrate,
+                backgroundColor: 'rgba(76,175,80,0.7)',
+                borderColor: '#388e3c',
+                borderWidth: 2,
+                borderRadius: 8,
+                categoryPercentage: 0.5,
+                barPercentage: 0.8
+            },
+            {
+                label: 'Uscite',
+                data: uscite,
+                backgroundColor: 'rgba(231,76,60,0.7)',
+                borderColor: '#c0392b',
+                borderWidth: 2,
+                borderRadius: 8,
+                categoryPercentage: 0.5,
+                barPercentage: 0.8
+            },
+            {
+                label: 'Risparmi',
+                data: saldo,
+                backgroundColor: 'rgba(52,152,219,0.7)',
+                borderColor: '#217dbb',
+                borderWidth: 2,
+                borderRadius: 8,
+                categoryPercentage: 0.5,
+                barPercentage: 0.8
+            }
+        ]
+    };
+    if (annualChart) {
+        annualChart.data = chartData;
+        annualChart.options.plugins.legend.labels.font = { size: 15, weight: 'bold' };
+        annualChart.update();
+    } else {
+        annualChart = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: {
+                plugins: {
+                    legend: { display: true, position: 'bottom', labels: { font: { size: 15, weight: 'bold' } } },
+                    tooltip: { enabled: true }
+                },
+                responsive: false,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#e0e0e0' }, ticks: { color: '#2a4d69', font: { size: 13 } } },
+                    x: { grid: { color: '#f0f0f0' }, ticks: { color: '#2a4d69', font: { size: 13 } } }
+                },
+                animation: { duration: 900, easing: 'easeOutQuart' }
+            }
+        });
+    }
+}
+
+// --- MODIFICA MOVIMENTO ---
+function openEditModal(id) {
+    fetch(`/api/movimenti?id=${id}`)
+        .then(res => res.json())
+        .then(entry => {
+            if (Array.isArray(entry)) entry = entry[0];
+            document.getElementById('editId').value = entry.id;
+            document.getElementById('editDate').value = entry.data;
+            document.getElementById('editType').value = entry.tipo === 'entrata' ? 'income' : 'expense';
+            document.getElementById('editAmount').value = entry.importo;
+            document.getElementById('editDescription').value = entry.descrizione || '';
+            document.getElementById('editModal').style.display = 'block';
+        });
+}
+
+// --- FILTRI UNIFICATI ---
 function getMovFilters() {
     const monthSel = document.getElementById('movMonth');
     const yearSel = document.getElementById('movYear');
@@ -188,16 +251,14 @@ function getMovFilters() {
 }
 
 async function updateAll() {
-    // Aggiorna riepilogo e pie chart in base ai filtri pie
     await updateSummaryPieChartFromFilters();
-    // Aggiorna andamento in base al filtro trend
     await updateTrendChart();
-    // Aggiorna lista movimenti in base ai filtri movimenti
+    await updateAnnualChart();
     const { month, year, type } = getMovFilters();
     await updateEntries(month, year, type);
 }
 
-// Popola selettore anno dinamicamente
+// --- POPOLA ANNI ---
 function populateYearSelect(id) {
     const sel = document.getElementById(id);
     if (!sel) return;
@@ -214,7 +275,6 @@ function populateYearSelect(id) {
 
 // --- AGGIORNA ENTRIES CON FILTRI ---
 async function updateEntries(month, year, type) {
-    // Se selezioni solo mese e anno = 'all', non aggiorna e non fa chiamata
     if (month && month !== 'all' && (!year || year === 'all')) {
         const tbody = document.querySelector('#entriesTable tbody');
         tbody.innerHTML = '';
@@ -253,7 +313,6 @@ async function updateEntries(month, year, type) {
         `;
         tbody.appendChild(tr);
     });
-    // Eventi elimina
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.onclick = async function() {
             if (confirm('Eliminare questa transazione?')) {
@@ -262,7 +321,6 @@ async function updateEntries(month, year, type) {
             }
         };
     });
-    // Eventi modifica
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.onclick = function() {
             openEditModal(btn.dataset.id);
@@ -270,85 +328,87 @@ async function updateEntries(month, year, type) {
     });
 }
 
-// --- INIZIALIZZAZIONE FILTRI E EVENTI ---
-// --- GRAFICA MODERNA ---
-function applyModernStyles() {
-    document.body.style.background = '#eaf0fa';
-    document.body.style.fontFamily = 'Inter, Arial, sans-serif';
-    document.querySelectorAll('.container').forEach(c => {
-        c.style.background = '#fff';
-        c.style.borderRadius = '18px';
-        c.style.boxShadow = '0 2px 16px 0 #b3c6e0';
-        c.style.padding = '32px 24px';
-        c.style.margin = '32px auto';
-        c.style.maxWidth = '480px';
-    });
-    document.querySelectorAll('input, select, button').forEach(el => {
-        el.style.borderRadius = '8px';
-        el.style.border = '1px solid #b3c6e0';
-        el.style.padding = '8px 10px';
-        el.style.marginRight = '8px';
-        let trendChart;
-        async function updateTrendChart() {
-            // Prendi anno dal filtro trend
-            let year = document.getElementById('trendYear').value;
-            if (!year || year === 'all') year = new Date().getFullYear();
-            const res = await fetch(`/api/andamento?year=${year}`);
-            const data = await res.json();
-            const labels = data.map(d => `${d.mese}/${d.anno}`);
-            const entrate = data.map(d => d.entrate);
-            const uscite = data.map(d => d.uscite);
-            const saldo = data.map(d => d.saldo);
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            ctx.canvas.width = 500;
-            ctx.canvas.height = 200;
-            const chartData = {
-                labels,
-                datasets: [
-                    {
-                        label: 'Entrate',
-                        data: entrate,
-                        backgroundColor: '#4caf50',
-                        borderColor: '#4caf50',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Uscite',
-                        data: uscite,
-                        backgroundColor: '#e74c3c',
-                        borderColor: '#e74c3c',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Risparmi',
-                        data: saldo,
-                        backgroundColor: '#3498db',
-                        borderColor: '#3498db',
-                        borderWidth: 1
-                    }
-                ]
-            };
-            if (trendChart) {
-                trendChart.data = chartData;
-                trendChart.update();
-            } else {
-                trendChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: chartData,
-                    options: {
-                        plugins: {
-                            legend: { display: true, position: 'bottom' },
-                            tooltip: { enabled: true }
-                        },
-                        responsive: false,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: { beginAtZero: true }
-                        }
-                    }
-                });
-            }
-        }}
-    )
-
+// --- UPDATE SUMMARY PIE DA FILTRI ---
+async function updateSummaryPieChartFromFilters() {
+    const month = document.getElementById('pieMonth').value;
+    const year = document.getElementById('pieYear').value;
+    let url = '/api/riepilogo';
+    if (month !== 'all' && year === 'all') {
+        document.getElementById('totalIncome').textContent = '0.00';
+        document.getElementById('totalExpense').textContent = '0.00';
+        document.getElementById('savings').textContent = '0.00';
+        updatePieChart('all', 'all', { entrate: 0, uscite: 0, saldo: 0 });
+        return;
     }
+    if (year !== 'all' && month !== 'all') {
+        url += `?mese=${month}&anno=${year}`;
+    } else if (year !== 'all') {
+        url += `?anno=${year}`;
+    }
+    const res = await fetch(url);
+    const data = await res.json();
+    document.getElementById('totalIncome').textContent = data.entrate.toFixed(2);
+    document.getElementById('totalExpense').textContent = data.uscite.toFixed(2);
+    document.getElementById('savings').textContent = data.saldo.toFixed(2);
+    updatePieChart(month, year, data);
+}
+
+// --- INIZIALIZZAZIONE ---
+document.addEventListener('DOMContentLoaded', () => {
+    populateYearSelect('pieYear');
+    populateYearSelect('trendYear');
+    populateYearSelect('movYear');
+
+    document.getElementById('pieMonth').addEventListener('change', updateAll);
+    document.getElementById('pieYear').addEventListener('change', updateAll);
+    document.getElementById('trendYear').addEventListener('change', updateAll);
+    document.getElementById('movMonth').addEventListener('change', updateAll);
+    document.getElementById('movYear').addEventListener('change', updateAll);
+    document.getElementById('movType').addEventListener('change', updateAll);
+
+    document.getElementById('entryForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const tipo = document.getElementById('type').value === 'income' ? 'entrata' : 'uscita';
+        const descrizione = document.getElementById('description').value;
+        const importo = parseFloat(document.getElementById('amount').value);
+        const data = document.getElementById('date').value;
+        await fetch('/api/movimenti', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tipo, descrizione, importo, data })
+        });
+        document.getElementById('entryForm').reset();
+        updateAll();
+    });
+
+    document.querySelectorAll('#editModal .close').forEach(btn => {
+        btn.onclick = function() {
+            document.getElementById('editModal').style.display = 'none';
+        };
+    });
+
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const data = document.getElementById('editDate').value;
+        const tipo = document.getElementById('editType').value === 'income' ? 'entrata' : 'uscita';
+        const importo = parseFloat(document.getElementById('editAmount').value);
+        const descrizione = document.getElementById('editDescription').value;
+        await fetch(`/api/movimenti/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data, tipo, importo, descrizione })
+        });
+        document.getElementById('editModal').style.display = 'none';
+        updateAll();
+    });
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('editModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+
+    updateAll();
+});
