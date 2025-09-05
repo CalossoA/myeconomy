@@ -12,12 +12,24 @@ initDB();
 // Ottieni tutti i movimenti
 app.get('/api/movimenti', (req, res) => {
     try {
-        let { month, year } = req.query;
+        let { month, year, tipo } = req.query;
         let query = 'SELECT * FROM movimenti';
         let params = [];
         if (month && year) {
             query += " WHERE strftime('%m', data) = ? AND strftime('%Y', data) = ?";
             params = [month.padStart(2, '0'), year];
+        } else if (year) {
+            query += " WHERE strftime('%Y', data) = ?";
+            params = [year];
+        }
+        // Filtro per tipo (entrata/uscita) se richiesto
+        if (tipo && tipo !== 'all') {
+            if (params.length) {
+                query += ' AND tipo = ?';
+            } else {
+                query += ' WHERE tipo = ?';
+            }
+            params.push(tipo);
         }
         query += ' ORDER BY data DESC';
         const rows = db.prepare(query).all(...params);
@@ -75,7 +87,11 @@ app.get('/api/riepilogo', (req, res) => {
         if (month && year) {
             query += " WHERE strftime('%m', data) = ? AND strftime('%Y', data) = ?";
             params = [month.padStart(2, '0'), year];
+        } else if (year) {
+            query += " WHERE strftime('%Y', data) = ?";
+            params = [year];
         }
+        // Se solo mese senza anno, non ha senso: restituisci tutto (o 0)
         const rows = db.prepare(query).all(...params);
         let entrate = 0;
         let uscite = 0;
@@ -83,7 +99,6 @@ app.get('/api/riepilogo', (req, res) => {
             if (mov.tipo === 'entrata') entrate += mov.importo;
             else if (mov.tipo === 'uscita') uscite += mov.importo;
         });
-
         res.json({ entrate, uscite, saldo: entrate - uscite });
     } catch (err) {
         res.status(500).json({ error: err.message });

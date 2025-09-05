@@ -51,24 +51,25 @@ async function updateSummaryPieChartFromFilters() {
     const month = document.getElementById('pieMonth').value;
     const year = document.getElementById('pieYear').value;
     let url = '/api/riepilogo';
-    if (year !== 'all' && month !== 'all') {
-        url += `?mese=${month}&anno=${year}`;
-    } else if (year !== 'all') {
-        url += `?anno=${year}`;
-    } else if (month !== 'all') {
-        // Se selezioni solo mese, non ha senso: mostra tutto
+    if (month !== 'all' && year === 'all') {
+        // Se selezioni solo mese, chiedi anche l'anno (non aggiorna nulla finché non selezioni anno)
         document.getElementById('totalIncome').textContent = '0.00';
         document.getElementById('totalExpense').textContent = '0.00';
         document.getElementById('savings').textContent = '0.00';
         updatePieChart('all', 'all', { entrate: 0, uscite: 0, saldo: 0 });
         return;
     }
+    if (year !== 'all' && month !== 'all') {
+        url += `?mese=${month}&anno=${year}`;
+    } else if (year !== 'all') {
+        url += `?anno=${year}`;
+    }
     const res = await fetch(url);
     const data = await res.json();
     document.getElementById('totalIncome').textContent = data.entrate.toFixed(2);
     document.getElementById('totalExpense').textContent = data.uscite.toFixed(2);
     document.getElementById('savings').textContent = data.saldo.toFixed(2);
-    updatePieChart('pie', 'pie', data); // forza update con dati dei filtri pie
+    updatePieChart(month, year, data);
 }
 
 
@@ -78,27 +79,9 @@ async function updateSummaryPieChartFromFilters() {
 
 // --- GRAFICO A TORTA ---
 let pieChart;
-async function updatePieChart(month, year, dataOverride) {
-    // Se chiamato da updateSummaryPieChartFromFilters, usa sempre i dati passati
-    let data;
-    if (dataOverride) {
-        data = dataOverride;
-    } else {
-        // Se chiamato da updateAll (non da filtri pie), prendi i filtri pie
-        let m = month, y = year;
-        if (month === 'pie' && year === 'pie') {
-            m = document.getElementById('pieMonth').value;
-            y = document.getElementById('pieYear').value;
-        }
-        let url = '/api/riepilogo';
-        if (y !== 'all' && m !== 'all') {
-            url += `?mese=${m}&anno=${y}`;
-        } else if (y !== 'all') {
-            url += `?anno=${y}`;
-        }
-        const res = await fetch(url);
-        data = await res.json();
-    }
+function updatePieChart(month, year, dataOverride) {
+    // Usa sempre i dati passati (mai fetch qui!)
+    const data = dataOverride;
     const ctx = document.getElementById('pieChart').getContext('2d');
     ctx.canvas.width = 220;
     ctx.canvas.height = 220;
@@ -231,14 +214,23 @@ function populateYearSelect(id) {
 
 // --- AGGIORNA ENTRIES CON FILTRI ---
 async function updateEntries(month, year, type) {
+    // Se selezioni solo mese e anno = 'all', non aggiorna e non fa chiamata
+    if (month && month !== 'all' && (!year || year === 'all')) {
+        const tbody = document.querySelector('#entriesTable tbody');
+        tbody.innerHTML = '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="5" style="text-align:center;color:#888;">Seleziona anche l'anno</td>`;
+        tbody.appendChild(tr);
+        return;
+    }
     let url = '/api/movimenti';
     const params = [];
     if (month && month !== 'all') params.push(`mese=${month}`);
     if (year && year !== 'all') params.push(`anno=${year}`);
+    if (type && type !== 'all') params.push(`tipo=${type}`);
     if (params.length) url += '?' + params.join('&');
     const res = await fetch(url);
     let entries = await res.json();
-    if (type && type !== 'all') entries = entries.filter(e => e.tipo === type);
     const tbody = document.querySelector('#entriesTable tbody');
     tbody.innerHTML = '';
     if (!entries.length) {
@@ -296,64 +288,64 @@ function applyModernStyles() {
         el.style.border = '1px solid #b3c6e0';
         el.style.padding = '8px 10px';
         el.style.marginRight = '8px';
-        el.style.fontSize = '1rem';
-    });
-    document.querySelectorAll('button').forEach(btn => {
-        btn.style.background = 'linear-gradient(90deg,#4caf50,#3498db)';
-        btn.style.color = '#fff';
-        btn.style.border = 'none';
-        btn.style.cursor = 'pointer';
-        btn.style.fontWeight = 'bold';
-        btn.onmouseover = () => btn.style.opacity = '0.85';
-        btn.onmouseleave = () => btn.style.opacity = '1';
-    });
-    document.querySelectorAll('table').forEach(t => {
-        t.style.width = '100%';
-        t.style.background = '#f8fbff';
-        t.style.borderRadius = '8px';
-        t.style.overflow = 'hidden';
-        t.style.marginBottom = '16px';
-    });
-    document.querySelectorAll('th, td').forEach(cell => {
-        cell.style.padding = '8px 6px';
-        cell.style.textAlign = 'center';
-    });
-    document.querySelectorAll('h2').forEach(h => {
-        h.style.color = '#2d3a4a';
-        h.style.marginTop = '16px';
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Popola select anni per i filtri movimenti
-    populateYearSelect('movYear');
-    // Eventi filtri movimenti
-    document.getElementById('movType').addEventListener('change', updateAll);
-    document.getElementById('movMonth').addEventListener('change', updateAll);
-    document.getElementById('movYear').addEventListener('change', updateAll);
-    // Eventi filtri grafici
-    populateYearSelect('pieYear');
-    populateYearSelect('trendYear');
-    document.getElementById('pieMonth').addEventListener('change', updateAll);
-    document.getElementById('pieYear').addEventListener('change', updateAll);
-    document.getElementById('trendYear').addEventListener('change', updateAll);
-    // Form aggiunta movimento
-    const entryForm = document.getElementById('entryForm');
-    entryForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const date = document.getElementById('date').value;
-        const type = document.getElementById('type').value === 'income' ? 'entrata' : 'uscita';
-        const amount = parseFloat(document.getElementById('amount').value);
-        const description = document.getElementById('description').value;
-        if (!date || isNaN(amount)) return;
-        await fetch('/api/movimenti', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: date, tipo: type, importo: amount, descrizione: description })
-        });
-        entryForm.reset();
-        updateAll();
-    });
-    updateAll();
-    applyModernStyles();
-});
+        let trendChart;
+        async function updateTrendChart() {
+            // Prendi anno dal filtro trend
+            let year = document.getElementById('trendYear').value;
+            if (!year || year === 'all') year = new Date().getFullYear();
+            const res = await fetch(`/api/andamento?year=${year}`);
+            const data = await res.json();
+            const labels = data.map(d => `${d.mese}/${d.anno}`);
+            const entrate = data.map(d => d.entrate);
+            const uscite = data.map(d => d.uscite);
+            const saldo = data.map(d => d.saldo);
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            ctx.canvas.width = 500;
+            ctx.canvas.height = 200;
+            const chartData = {
+                labels,
+                datasets: [
+                    {
+                        label: 'Entrate',
+                        data: entrate,
+                        backgroundColor: '#4caf50',
+                        borderColor: '#4caf50',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Uscite',
+                        data: uscite,
+                        backgroundColor: '#e74c3c',
+                        borderColor: '#e74c3c',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Risparmi',
+                        data: saldo,
+                        backgroundColor: '#3498db',
+                        borderColor: '#3498db',
+                        borderWidth: 1
+                    }
+                ]
+            };
+            if (trendChart) {
+                trendChart.data = chartData;
+                trendChart.update();
+            } else {
+                trendChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        plugins: {
+                            legend: { display: true, position: 'bottom' },
+                            tooltip: { enabled: true }
+                        },
+                        responsive: false,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+        }
