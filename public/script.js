@@ -275,12 +275,28 @@ function populateYearSelect(id) {
 
 // --- AGGIORNA ENTRIES CON FILTRI ---
 async function updateEntries(month, year, type) {
+    // Mostra tabella su desktop, card su mobile
+    const isMobile = window.matchMedia('(max-width: 600px)').matches;
+    const table = document.getElementById('entriesTable');
+    const mobileContainer = document.querySelector('.entries-table-mobile');
+    if (isMobile) {
+        table.style.display = 'none';
+        mobileContainer.style.display = 'flex';
+    } else {
+        table.style.display = '';
+        mobileContainer.style.display = 'none';
+    }
+
     if (month && month !== 'all' && (!year || year === 'all')) {
-        const tbody = document.querySelector('#entriesTable tbody');
-        tbody.innerHTML = '';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td colspan="5" style="text-align:center;color:#888;">Seleziona anche l'anno</td>`;
-        tbody.appendChild(tr);
+        if (isMobile) {
+            mobileContainer.innerHTML = '<div style="text-align:center;color:#888;padding:12px;">Seleziona anche l\'anno</div>';
+        } else {
+            const tbody = document.querySelector('#entriesTable tbody');
+            tbody.innerHTML = '';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td colspan="5" style="text-align:center;color:#888;">Seleziona anche l'anno</td>`;
+            tbody.appendChild(tr);
+        }
         return;
     }
     let url = '/api/movimenti';
@@ -291,6 +307,46 @@ async function updateEntries(month, year, type) {
     if (params.length) url += '?' + params.join('&');
     const res = await fetch(url);
     let entries = await res.json();
+
+    if (isMobile) {
+        // Mostra card
+        mobileContainer.innerHTML = '';
+        if (!entries.length) {
+            mobileContainer.innerHTML = '<div style="text-align:center;color:#888;padding:12px;">Nessun movimento trovato</div>';
+            return;
+        }
+        entries.forEach(e => {
+            const card = document.createElement('div');
+            card.className = 'entry-card';
+            card.innerHTML = `
+                <div class="entry-card-row"><span class="entry-card-label">Data:</span> <span>${e.data}</span></div>
+                <div class="entry-card-row"><span class="entry-card-label">Tipo:</span> <span>${e.tipo === 'entrata' ? 'Entrata' : (e.tipo === 'uscita' ? 'Uscita' : e.tipo)}</span></div>
+                <div class="entry-card-row"><span class="entry-card-label">Importo:</span> <span>${e.importo.toFixed(2)} &euro;</span></div>
+                <div class="entry-card-row"><span class="entry-card-label">Descrizione:</span> <span>${e.descrizione || ''}</span></div>
+                <div class="entry-card-actions">
+                    <button class="edit-btn" data-id="${e.id}">&#9998;</button>
+                    <button class="delete-btn" data-id="${e.id}">&#128465;</button>
+                </div>
+            `;
+            mobileContainer.appendChild(card);
+        });
+        mobileContainer.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.onclick = async function() {
+                if (confirm('Eliminare questa transazione?')) {
+                    await fetch(`/api/movimenti/${btn.dataset.id}`, { method: 'DELETE' });
+                    updateAll();
+                }
+            };
+        });
+        mobileContainer.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.onclick = function() {
+                openEditModal(btn.dataset.id);
+            };
+        });
+        return;
+    }
+
+    // Desktop: tabella classica
     const tbody = document.querySelector('#entriesTable tbody');
     tbody.innerHTML = '';
     if (!entries.length) {
