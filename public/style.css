@@ -1,3 +1,38 @@
+/* Pie chart container e canvas responsive e nitido */
+.pie-chart-container {
+	max-width: 340px;
+	margin-left: auto;
+	margin-right: auto;
+	background: #fff;
+	border-radius: 1.2rem;
+	box-shadow: 0 4px 18px #3498db22, 0 1.5px 8px #3498db22;
+	border: 2px solid #4a90e2;
+	padding: 1.2rem 1.2rem 1rem 1.2rem;
+}
+.pie-chart-container canvas {
+	max-width: 100%;
+	height: auto;
+	aspect-ratio: 1/1;
+	image-rendering: auto;
+	border-radius: 1rem;
+	background: #f7fafc;
+	box-shadow: 0 1px 4px #3498db11;
+}
+
+/* Pie filters migliorati */
+.pie-filters .form-select {
+	min-width: 90px;
+	max-width: 120px;
+	display: inline-block;
+}
+.pie-filters label {
+	font-weight: 600;
+	color: #217dbb;
+	margin-right: 4px;
+}
+.pie-filters .fw-semibold {
+	font-size: 1.08em;
+}
 .annual-chart-container {
 	margin-bottom: 36px;
 	margin-top: 12px;
@@ -141,72 +176,110 @@ tr:hover { background: #d6eaf8; transition: background 0.2s; }
 		gap: 16px;
 		margin-top: 10px;
 	}
-	.entry-card {
-		background: #f7fafc;
-		border-radius: 1rem;
-		box-shadow: 0 2px 8px #3498db22;
-		border: 1.5px solid #eaf1fb;
-		padding: 18px 16px 12px 16px;
-		font-size: 1.08em;
-		margin-bottom: 0.5rem;
-		display: flex;
-		flex-direction: column;
-		transition: box-shadow 0.2s;
-		position: relative;
-	}
-	.entry-card-row {
-		display: flex;
-		justify-content: space-between;
-		margin-bottom: 6px;
-		font-size: 1em;
-		gap: 8px;
-	}
-	.entry-card-label {
-		font-weight: 600;
-		color: #2a4d69;
-		margin-right: 6px;
-		min-width: 90px;
-		flex-shrink: 0;
-	}
-	.entry-card-actions {
-		display: flex;
-		gap: 10px;
-		margin-top: 10px;
-		justify-content: flex-end;
-	}
-	.edit-btn, .delete-btn {
-		font-size: 1.2em;
-		padding: 8px 14px;
-		border-radius: 8px;
-		border: none;
-		background: #eaf1fb;
-		color: #217dbb;
-		transition: background 0.2s, color 0.2s;
-	}
-	.edit-btn:hover {
-		background: #d0e6fa;
-		color: #217dbb;
-	}
-	.delete-btn:hover {
-		background: #ffd6d6;
-		color: #c0392b;
-	}
-	.entry-card .edit-btn, .entry-card .delete-btn {
-		font-size: 1.3em;
-		background: none;
-		color: #217dbb;
-		border: none;
-		padding: 0 8px;
-	}
-	.entry-card .edit-btn:hover {
-		color: #357ab8;
-	}
-	.entry-card .delete-btn:hover {
-		color: #c0392b;
-	}
-	.entry-card:last-child {
-		margin-bottom: 0;
-	}
+			.entry-card {
+				background: #fff;
+				border-radius: 1.3rem;
+				box-shadow: 0 6px 24px #217dbb22, 0 2px 12px #3498db22;
+				border: 2.5px solid #4a90e2;
+				padding: 1.3rem 1.2rem 1rem 1.2rem;
+				font-size: 1.11em;
+				margin-bottom: 1.3rem;
+				display: flex;
+				flex-direction: column;
+				transition: box-shadow 0.18s, border 0.18s;
+				position: relative;
+				overflow: hidden;
+			}
+			.entry-card:hover, .entry-card:focus-within {
+				box-shadow: 0 10px 32px #217dbb33, 0 2px 12px #3498db33;
+				border-color: #217dbb;
+			}
+		.entry-card-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 7px;
+			font-size: 1em;
+			gap: 8px;
+		}
+			.entry-card-label {
+				font-weight: 700;
+				color: #217dbb;
+				margin-right: 8px;
+				min-width: 90px;
+				flex-shrink: 0;
+				letter-spacing: 0.01em;
+				font-size: 1.04em;
+			}
+		.entry-card-value {
+			font-weight: 500;
+			color: #2a4d69;
+			text-align: right;
+			flex: 1;
+			word-break: break-word;
+		}
+			.entry-card .badge {
+				font-size: 1.08em;
+				padding: 0.5em 1.1em;
+				border-radius: 0.9em;
+				font-weight: 700;
+				margin-left: 0.7em;
+				box-shadow: 0 1px 4px #217dbb22;
+				letter-spacing: 0.01em;
+			}
+			.entry-card .badge-entrata {
+				background: #e8f5e9;
+				color: #388e3c;
+				border: 2px solid #b2dfdb;
+			}
+			.entry-card .badge-uscita {
+				background: #ffebee;
+				color: #c0392b;
+				border: 2px solid #ffcdd2;
+			}
+			.entry-card-actions {
+				display: flex;
+				gap: 18px;
+				margin-top: 12px;
+				justify-content: flex-end;
+				border-top: 1.5px solid #eaf1fb;
+				padding-top: 10px;
+			}
+			.edit-btn, .delete-btn {
+				font-size: 1.25em;
+				padding: 7px 13px;
+				border-radius: 8px;
+				border: none;
+				background: #f7fafc;
+				color: #217dbb;
+				transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+				outline: none;
+				box-shadow: 0 1px 4px #217dbb11;
+			}
+		.edit-btn:hover {
+			background: #d0e6fa;
+			color: #217dbb;
+		}
+		.delete-btn:hover {
+			background: #ffd6d6;
+			color: #c0392b;
+		}
+		.entry-card .edit-btn, .entry-card .delete-btn {
+			font-size: 1.25em;
+			background: none;
+			color: #217dbb;
+			border: none;
+			padding: 0 8px;
+		}
+		.entry-card .edit-btn:hover {
+			color: #357ab8;
+		}
+		.entry-card .delete-btn:hover {
+			color: #c0392b;
+		}
+		.entry-card:last-child {
+			margin-bottom: 0;
+		}
 }
 
 @media (min-width: 601px) {

@@ -38,9 +38,16 @@ async function updatePieChart(month, year, dataOverride) {
         dataOverride = await res.json();
     }
     const data = dataOverride;
-    const ctx = document.getElementById('pieChart').getContext('2d');
-    ctx.canvas.width = 220;
-    ctx.canvas.height = 220;
+    const canvas = document.getElementById('pieChart');
+    const dpr = window.devicePixelRatio || 1;
+    // Imposta dimensioni fisiche e CSS per nitidezza retina
+    canvas.width = 340 * dpr;
+    canvas.height = 340 * dpr;
+    canvas.style.width = '340px';
+    canvas.style.height = '340px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // reset
+    ctx.scale(dpr, dpr);
     const chartData = {
         labels: ['Entrate', 'Uscite', 'Risparmi'],
         datasets: [{
@@ -308,8 +315,9 @@ async function updateEntries(month, year, type) {
     const res = await fetch(url);
     let entries = await res.json();
 
+
     if (isMobile) {
-        // Mostra card
+        // Mostra card con edit inline
         mobileContainer.innerHTML = '';
         if (!entries.length) {
             mobileContainer.innerHTML = '<div style="text-align:center;color:#888;padding:12px;">Nessun movimento trovato</div>';
@@ -318,18 +326,20 @@ async function updateEntries(month, year, type) {
         entries.forEach(e => {
             const card = document.createElement('div');
             card.className = 'entry-card';
+            card.dataset.id = e.id;
             card.innerHTML = `
-                <div class="entry-card-row"><span class="entry-card-label">Data:</span> <span>${e.data}</span></div>
-                <div class="entry-card-row"><span class="entry-card-label">Tipo:</span> <span>${e.tipo === 'entrata' ? 'Entrata' : (e.tipo === 'uscita' ? 'Uscita' : e.tipo)}</span></div>
-                <div class="entry-card-row"><span class="entry-card-label">Importo:</span> <span>${e.importo.toFixed(2)} &euro;</span></div>
-                <div class="entry-card-row"><span class="entry-card-label">Descrizione:</span> <span>${e.descrizione || ''}</span></div>
+                <div class="entry-card-row"><span class="entry-card-label">Data:</span> <span class="entry-card-value">${e.data}</span></div>
+                <div class="entry-card-row"><span class="entry-card-label">Tipo:</span> <span class="entry-card-value">${e.tipo === 'entrata' ? 'Entrata <span class=\"badge badge-entrata\">Entrata</span>' : (e.tipo === 'uscita' ? 'Uscita <span class=\"badge badge-uscita\">Uscita</span>' : e.tipo)}</span></div>
+                <div class="entry-card-row"><span class="entry-card-label">Importo:</span> <span class="entry-card-value">${e.importo.toFixed(2)} &euro;</span></div>
+                <div class="entry-card-row"><span class="entry-card-label">Descrizione:</span> <span class="entry-card-value">${e.descrizione || ''}</span></div>
                 <div class="entry-card-actions">
-                    <button class="edit-btn" data-id="${e.id}">&#9998;</button>
-                    <button class="delete-btn" data-id="${e.id}">&#128465;</button>
+                    <button class="edit-btn" data-id="${e.id}" title="Modifica movimento">&#9998;</button>
+                    <button class="delete-btn" data-id="${e.id}" title="Elimina movimento">&#128465;</button>
                 </div>
             `;
             mobileContainer.appendChild(card);
         });
+        // Azioni elimina
         mobileContainer.querySelectorAll('.delete-btn').forEach(btn => {
             btn.onclick = async function() {
                 if (confirm('Eliminare questa transazione?')) {
@@ -338,15 +348,62 @@ async function updateEntries(month, year, type) {
                 }
             };
         });
+        // Azioni modifica inline
         mobileContainer.querySelectorAll('.edit-btn').forEach(btn => {
             btn.onclick = function() {
-                openEditModal(btn.dataset.id);
+                const card = btn.closest('.entry-card');
+                const id = btn.dataset.id;
+                const entry = entries.find(x => String(x.id) === String(id));
+                if (!entry) return;
+                // Sostituisci contenuto con form inline
+                card.innerHTML = `
+                    <form class="edit-inline-form">
+                        <div class="mb-2">
+                            <label class="form-label">Data</label>
+                            <input type="date" class="form-control" name="data" value="${entry.data}" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" name="tipo">
+                                <option value="entrata" ${entry.tipo === 'entrata' ? 'selected' : ''}>Entrata</option>
+                                <option value="uscita" ${entry.tipo === 'uscita' ? 'selected' : ''}>Uscita</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Importo</label>
+                            <input type="number" class="form-control" name="importo" value="${entry.importo}" min="0" step="0.01" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Descrizione</label>
+                            <input type="text" class="form-control" name="descrizione" value="${entry.descrizione || ''}">
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="submit" class="btn btn-success btn-sm">Salva</button>
+                            <button type="button" class="btn btn-secondary btn-sm cancel-edit">Annulla</button>
+                        </div>
+                    </form>
+                `;
+                card.querySelector('.cancel-edit').onclick = () => updateAll();
+                card.querySelector('form').onsubmit = async function(ev) {
+                    ev.preventDefault();
+                    const fd = new FormData(ev.target);
+                    const data = fd.get('data');
+                    const tipo = fd.get('tipo');
+                    const importo = parseFloat(fd.get('importo'));
+                    const descrizione = fd.get('descrizione');
+                    await fetch(`/api/movimenti/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data, tipo, importo, descrizione })
+                    });
+                    updateAll();
+                };
             };
         });
         return;
     }
 
-    // Desktop: tabella classica
+    // Desktop: tabella classica con edit inline
     const tbody = document.querySelector('#entriesTable tbody');
     tbody.innerHTML = '';
     if (!entries.length) {
@@ -363,13 +420,13 @@ async function updateEntries(month, year, type) {
             <td>${e.importo.toFixed(2)} €</td>
             <td>${e.descrizione || ''}</td>
             <td>
-                <button class="edit-btn" data-id="${e.id}">✏️</button>
-                <button class="delete-btn" data-id="${e.id}">🗑️</button>
+                <button class="edit-btn" data-id="${e.id}" title="Modifica movimento">✏️</button>
+                <button class="delete-btn" data-id="${e.id}" title="Elimina movimento">🗑️</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
-    document.querySelectorAll('.delete-btn').forEach(btn => {
+    tbody.querySelectorAll('.delete-btn').forEach(btn => {
         btn.onclick = async function() {
             if (confirm('Eliminare questa transazione?')) {
                 await fetch(`/api/movimenti/${btn.dataset.id}`, { method: 'DELETE' });
@@ -377,9 +434,53 @@ async function updateEntries(month, year, type) {
             }
         };
     });
-    document.querySelectorAll('.edit-btn').forEach(btn => {
+    tbody.querySelectorAll('.edit-btn').forEach(btn => {
         btn.onclick = function() {
-            openEditModal(btn.dataset.id);
+            const tr = btn.closest('tr');
+            const id = btn.dataset.id;
+            const entry = entries.find(x => String(x.id) === String(id));
+            if (!entry) return;
+            // Sostituisci la riga con form inline
+            tr.innerHTML = `
+                <td colspan="5">
+                    <form class="edit-inline-form row g-2 align-items-end">
+                        <div class="col-12 col-md-2 mb-2">
+                            <input type="date" class="form-control" name="data" value="${entry.data}" required>
+                        </div>
+                        <div class="col-12 col-md-2 mb-2">
+                            <select class="form-select" name="tipo">
+                                <option value="entrata" ${entry.tipo === 'entrata' ? 'selected' : ''}>Entrata</option>
+                                <option value="uscita" ${entry.tipo === 'uscita' ? 'selected' : ''}>Uscita</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-2 mb-2">
+                            <input type="number" class="form-control" name="importo" value="${entry.importo}" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-12 col-md-4 mb-2">
+                            <input type="text" class="form-control" name="descrizione" value="${entry.descrizione || ''}">
+                        </div>
+                        <div class="col-12 col-md-2 d-flex gap-2 mb-2">
+                            <button type="submit" class="btn btn-success btn-sm">Salva</button>
+                            <button type="button" class="btn btn-secondary btn-sm cancel-edit">Annulla</button>
+                        </div>
+                    </form>
+                </td>
+            `;
+            tr.querySelector('.cancel-edit').onclick = () => updateAll();
+            tr.querySelector('form').onsubmit = async function(ev) {
+                ev.preventDefault();
+                const fd = new FormData(ev.target);
+                const data = fd.get('data');
+                const tipo = fd.get('tipo');
+                const importo = parseFloat(fd.get('importo'));
+                const descrizione = fd.get('descrizione');
+                await fetch(`/api/movimenti/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data, tipo, importo, descrizione })
+                });
+                updateAll();
+            };
         };
     });
 }
@@ -437,34 +538,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAll();
     });
 
-    document.querySelectorAll('#editModal .close').forEach(btn => {
-        btn.onclick = function() {
-            document.getElementById('editModal').style.display = 'none';
-        };
-    });
-
-    document.getElementById('editForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const id = document.getElementById('editId').value;
-        const data = document.getElementById('editDate').value;
-        const tipo = document.getElementById('editType').value === 'income' ? 'entrata' : 'uscita';
-        const importo = parseFloat(document.getElementById('editAmount').value);
-        const descrizione = document.getElementById('editDescription').value;
-        await fetch(`/api/movimenti/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data, tipo, importo, descrizione })
-        });
-        document.getElementById('editModal').style.display = 'none';
-        updateAll();
-    });
-
-    window.onclick = function(event) {
-        const modal = document.getElementById('editModal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    };
 
     updateAll();
 });
