@@ -1,11 +1,69 @@
-async function updateSummary(month, year) {
+// --- MODIFICA MOVIMENTO ---
+function openEditModal(id) {
+    // Trova il movimento da modificare
+    fetch(`/api/movimenti?id=${id}`)
+        .then(res => res.json())
+        .then(entry => {
+            // entry può essere array o oggetto singolo
+            if (Array.isArray(entry)) entry = entry[0];
+            document.getElementById('editId').value = entry.id;
+            document.getElementById('editDate').value = entry.data;
+            document.getElementById('editType').value = entry.tipo === 'entrata' ? 'income' : 'expense';
+            document.getElementById('editAmount').value = entry.importo;
+            document.getElementById('editDescription').value = entry.descrizione || '';
+            document.getElementById('editModal').style.display = 'block';
+        });
+}
+
+// Chiudi modale
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#editModal .close').forEach(btn => {
+        btn.onclick = function() {
+            document.getElementById('editModal').style.display = 'none';
+        };
+    });
+    // Salva modifica
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const data = document.getElementById('editDate').value;
+        const tipo = document.getElementById('editType').value === 'income' ? 'entrata' : 'uscita';
+        const importo = parseFloat(document.getElementById('editAmount').value);
+        const descrizione = document.getElementById('editDescription').value;
+        await fetch(`/api/movimenti/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data, tipo, importo, descrizione })
+        });
+        document.getElementById('editModal').style.display = 'none';
+        updateAll();
+    });
+    // Chiudi modale cliccando fuori
+    window.onclick = function(event) {
+        const modal = document.getElementById('editModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+});
+async function updateSummaryPieChartFromFilters() {
+    // Prendi valori dai filtri pie chart
+    const month = document.getElementById('pieMonth').value;
+    const year = document.getElementById('pieYear').value;
+    // Se selezionato mese, obbliga anche anno
     let url = '/api/riepilogo';
-    if (month && year) url += `?mese=${month}&anno=${year}`;
+    if (month !== 'all' && year !== 'all') {
+        url += `?mese=${month}&anno=${year}`;
+    } else if (year !== 'all') {
+        url += `?anno=${year}`;
+    }
     const res = await fetch(url);
     const data = await res.json();
     document.getElementById('totalIncome').textContent = data.entrate.toFixed(2);
     document.getElementById('totalExpense').textContent = data.uscite.toFixed(2);
     document.getElementById('savings').textContent = data.saldo.toFixed(2);
+    // Aggiorna anche la torta
+    updatePieChart(month, year, data);
 }
 
 
@@ -15,13 +73,25 @@ async function updateSummary(month, year) {
 
 // --- GRAFICO A TORTA ---
 let pieChart;
-async function updatePieChart(month, year) {
-    let url = '/api/riepilogo';
-    if (month && month !== 'all') url += `?mese=${month}`;
-    if (year && year !== 'all') url += (url.includes('?') ? '&' : '?') + `anno=${year}`;
-    const res = await fetch(url);
-    const data = await res.json();
+async function updatePieChart(month, year, dataOverride) {
+    // Se dataOverride è passato, usa quello, altrimenti fetch
+    let data;
+    if (dataOverride) {
+        data = dataOverride;
+    } else {
+        let url = '/api/riepilogo';
+        if (month !== 'all' && year !== 'all') {
+            url += `?mese=${month}&anno=${year}`;
+        } else if (year !== 'all') {
+            url += `?anno=${year}`;
+        }
+        const res = await fetch(url);
+        data = await res.json();
+    }
     const ctx = document.getElementById('pieChart').getContext('2d');
+    // Migliora qualità e riduci dimensione
+    ctx.canvas.width = 220;
+    ctx.canvas.height = 220;
     const chartData = {
         labels: ['Entrate', 'Uscite', 'Risparmi'],
         datasets: [{
@@ -41,7 +111,9 @@ async function updatePieChart(month, year) {
                 plugins: {
                     legend: { display: true, position: 'bottom' },
                     tooltip: { enabled: true }
-                }
+                },
+                responsive: false,
+                maintainAspectRatio: false
             }
         });
     }
@@ -49,8 +121,9 @@ async function updatePieChart(month, year) {
 
 // --- GRAFICO ANDAMENTO UNICO ---
 let trendChart;
-async function updateTrendChart(month, year) {
-    // Il backend accetta solo year, ma il filtro mese serve per la tabella e la torta
+async function updateTrendChart() {
+    // Prendi anno dal filtro trend
+    let year = document.getElementById('trendYear').value;
     if (!year || year === 'all') year = new Date().getFullYear();
     const res = await fetch(`/api/andamento?year=${year}`);
     const data = await res.json();
@@ -59,6 +132,9 @@ async function updateTrendChart(month, year) {
     const uscite = data.map(d => d.uscite);
     const saldo = data.map(d => d.saldo);
     const ctx = document.getElementById('trendChart').getContext('2d');
+    // Migliora qualità
+    ctx.canvas.width = 500;
+    ctx.canvas.height = 200;
     const chartData = {
         labels,
         datasets: [
@@ -97,6 +173,8 @@ async function updateTrendChart(month, year) {
                     legend: { display: true, position: 'bottom' },
                     tooltip: { enabled: true }
                 },
+                responsive: false,
+                maintainAspectRatio: false,
                 scales: {
                     y: { beginAtZero: true }
                 }
@@ -117,10 +195,12 @@ function getMovFilters() {
 }
 
 async function updateAll() {
+    // Aggiorna riepilogo e pie chart in base ai filtri pie
+    await updateSummaryPieChartFromFilters();
+    // Aggiorna andamento in base al filtro trend
+    await updateTrendChart();
+    // Aggiorna lista movimenti in base ai filtri movimenti
     const { month, year, type } = getMovFilters();
-    await updateSummary(month, year);
-    await updatePieChart(month, year);
-    await updateTrendChart(month, year);
     await updateEntries(month, year, type);
 }
 
@@ -193,9 +273,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Eventi filtri grafici
     populateYearSelect('pieYear');
     populateYearSelect('trendYear');
-    document.getElementById('pieMonth').addEventListener('change', () => updatePieChart());
-    document.getElementById('pieYear').addEventListener('change', () => updatePieChart());
-    document.getElementById('trendYear').addEventListener('change', () => updateTrendChart());
+    document.getElementById('pieMonth').addEventListener('change', updateAll);
+    document.getElementById('pieYear').addEventListener('change', updateAll);
+    document.getElementById('trendYear').addEventListener('change', updateAll);
     // Form aggiunta movimento
     const entryForm = document.getElementById('entryForm');
     entryForm.addEventListener('submit', async function(e) {
